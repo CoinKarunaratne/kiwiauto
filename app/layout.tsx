@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Sen } from "next/font/google";
 import { cn } from "@/lib/utils";
+import Providers from "../lib/Providers";
 
 const sen = Sen({
   weight: ["400", "700"],
@@ -24,7 +25,7 @@ export default function RootLayout({
       className={cn("bg-white text-slate-900 antialiased", sen.className)}
     >
       <body className="min-h-screen bg-slate-50 dark:bg-[rgb(3,7,17)] antialiased">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
