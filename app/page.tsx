@@ -1,15 +1,11 @@
-"use client";
-
-import Lottie, { LottieRefCurrentProps } from "lottie-react";
-import animationData from "@/public/114986-ultimate-trading-experience.json";
-import { useRef } from "react";
 import Navbar from "./components/Navbar";
 import LargeHeading from "./components/ui/LargeHeading";
 import Paragraph from "./components/ui/Paragraph";
 import Link from "next/link";
+import LandingPageForm from "./components/LandingPageForm";
+import Lottie from "./components/LottieComponent";
 
 export default function Home() {
-  const assistantRef = useRef<LottieRefCurrentProps>(null);
   return (
     <main className="relative h-screen flex items-center justify-center overflow-x-hidden">
       <Navbar />
@@ -31,14 +27,8 @@ export default function Home() {
             </Link>{" "}
             is your ONE STOP solution bringing best car services.
           </Paragraph>
-
-          <div className="relative w-full max-w-xl lg:max-w-3xl lg:left-1/2 aspect-square lg:absolute">
-            <Lottie
-              className="img-shadow"
-              lottieRef={assistantRef}
-              animationData={animationData}
-            />
-          </div>
+          <LandingPageForm />
+          <Lottie />
         </div>
       </div>
     </main>

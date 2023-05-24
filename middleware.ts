@@ -11,6 +11,10 @@ export async function middleware(req: NextRequest) {
     return;
   }
 
+  if (req.nextUrl.pathname.startsWith("/login") && !verifiedToken) {
+    return;
+  }
+
   if (req.nextUrl.pathname === "/" && verifiedToken) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
