@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/app/components/ui/use-toast";
 import { sendPasswordResetEmail } from "firebase/auth";
 import ResetPasswordComponent from "./ResetPasswordComponent";
+import axios from "axios";
 
 interface LandingPageFormProps {}
 
@@ -52,6 +53,12 @@ const LandingPageForm: FC<LandingPageFormProps> = ({}) => {
         "coinkarunaratne@gmail.com",
         input
       );
+
+      await axios
+        .post("/api/auth/addJWT")
+        .then((response) => console.log(response))
+        .catch((error) => setError(`JWT Error : ${error}`));
+
       router.push("/dashboard");
     } catch (err) {
       setIsLoading(false);
