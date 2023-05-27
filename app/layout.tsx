@@ -1,9 +1,9 @@
 import "./globals.css";
-import { Sen } from "next/font/google";
+import { Inter } from "next/font/google";
 import { cn } from "@/lib/utils";
 import Providers from "../lib/Providers";
 
-const sen = Sen({
+const inter = Inter({
   weight: ["400", "700"],
   subsets: ["latin"],
   variable: "--font-sen",
@@ -22,7 +22,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn("bg-white text-slate-900 antialiased", sen.className)}
+      className={cn("bg-white text-slate-900 antialiased", inter.className)}
     >
       <body className="min-h-screen bg-slate-50 dark:bg-[rgb(3,7,17)] antialiased">
         <Providers>{children}</Providers>
