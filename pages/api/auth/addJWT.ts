@@ -10,7 +10,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       .setProtectedHeader({ alg: "HS256" })
       .setJti(nanoid())
       .setIssuedAt()
-      .setExpirationTime("1m")
+      .setExpirationTime("2H")
       .sign(new TextEncoder().encode(getJwtSecretKey()));
 
     res.setHeader(
