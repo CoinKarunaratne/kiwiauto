@@ -56,7 +56,6 @@ const LandingPageForm: FC<LandingPageFormProps> = ({}) => {
 
       await axios
         .post("/api/auth/addJWT")
-        .then((response) => console.log(response))
         .catch((error) => setError(`JWT Error : ${error}`));
 
       router.push("/dashboard");

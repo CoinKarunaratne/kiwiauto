@@ -33,6 +33,12 @@ export function MainNav({
         href="/examples/dashboard"
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
+        Sales
+      </Link>
+      <Link
+        href="/examples/dashboard"
+        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+      >
         Settings
       </Link>
     </nav>

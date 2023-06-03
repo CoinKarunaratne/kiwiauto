@@ -27,8 +27,14 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-
-const groups = ["Car Grooming"];
+import { db } from "@/config/firebase";
+import { storage } from "@/config/firebase";
+import { addDoc, collection, getDocs } from "firebase/firestore";
+import {
+  getDownloadURL,
+  ref as storageRef,
+  uploadBytes,
+} from "firebase/storage";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
@@ -40,6 +46,86 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
   const [open, setOpen] = React.useState(false);
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
   const [selectedTeam, setSelectedTeam] = React.useState<number>(0);
+  const [businesses, setBusinesses] = React.useState<Array<any>>([]);
+  const [newBusiness, setNewBusiness] = React.useState<string>();
+  const [isLoading, setLoading] = React.useState<boolean>(false);
+  const [fileUpload, setFileUpload] = React.useState<File | null>(null);
+  const [error, setError] = React.useState<string>("");
+
+  const businessRef = collection(db, "Businesses");
+  const getBusinessList = async () => {
+    try {
+      const data = await getDocs(businessRef);
+      const filteredData = data.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      setBusinesses(filteredData);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  React.useEffect(() => {
+    const businessRefHook = collection(db, "Businesses");
+    const getBusinessListHook = async () => {
+      try {
+        const data = await getDocs(businessRefHook);
+        const filteredData = data.docs.map((doc) => ({
+          ...doc.data(),
+          id: doc.id,
+        }));
+        setBusinesses(filteredData);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getBusinessListHook();
+  }, []);
+
+  const submitBusiness = async () => {
+    try {
+      setLoading(true);
+      if (!newBusiness) {
+        setError("Please add a valid business name");
+        setLoading(false);
+        return;
+      }
+      if (fileUpload) {
+        await uploadFile();
+        const url = await getDownloadURL(
+          storageRef(storage, `businesses/${fileUpload?.name}`)
+        );
+        await addDoc(businessRef, { title: newBusiness, logo: url });
+        setShowNewTeamDialog(false);
+        setLoading(false);
+        getBusinessList();
+        setNewBusiness("");
+        return;
+      }
+      await addDoc(businessRef, { title: newBusiness });
+      setShowNewTeamDialog(false);
+      setLoading(false);
+      getBusinessList();
+      setNewBusiness("");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const uploadFile = async () => {
+    const filesFolderRef = storageRef(
+      storage,
+      `businesses/${fileUpload?.name}`
+    );
+    try {
+      if (fileUpload) {
+        await uploadBytes(filesFolderRef, fileUpload);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
@@ -55,12 +141,12 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
           >
             <Avatar className="mr-2 h-5 w-5">
               <AvatarImage
-                src={`/${groups[selectedTeam]}`}
-                alt={groups[selectedTeam]}
+                src={businesses[selectedTeam]?.logo}
+                alt={businesses[selectedTeam]?.title}
               />
-              <AvatarFallback>$$</AvatarFallback>
+              <AvatarFallback>$</AvatarFallback>
             </Avatar>
-            {groups[selectedTeam]}
+            {businesses[selectedTeam]?.title}
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -69,8 +155,8 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
             <CommandList>
               <CommandInput placeholder="Search business..." />
               <CommandEmpty>No team found.</CommandEmpty>
-              {groups.map((group, index) => (
-                <CommandGroup key={index} heading={"Current Businesses"}>
+              <CommandGroup heading={"Current Businesses"}>
+                {businesses?.map((group, index) => (
                   <CommandItem
                     key={index}
                     onSelect={() => {
@@ -80,13 +166,10 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                     className="text-sm"
                   >
                     <Avatar className="mr-2 h-5 w-5">
-                      <AvatarImage
-                        src={`/${groups[selectedTeam]}`}
-                        alt={group}
-                      />
-                      <AvatarFallback>$$</AvatarFallback>
+                      <AvatarImage src={group?.logo} alt={group?.title} />
+                      <AvatarFallback>$</AvatarFallback>
                     </Avatar>
-                    {group}
+                    {group?.title}
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
@@ -94,8 +177,8 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                       )}
                     />
                   </CommandItem>
-                </CommandGroup>
-              ))}
+                ))}
+              </CommandGroup>
             </CommandList>
             <CommandSeparator />
             <CommandList>
@@ -127,7 +210,28 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
           <div className="space-y-4 py-2 pb-4">
             <div className="space-y-2">
               <Label htmlFor="name">Business name</Label>
-              <Input id="name" placeholder="Car Grooming." autoComplete="off" />
+              <Input
+                id="name"
+                placeholder="Car Grooming."
+                autoComplete="off"
+                value={newBusiness}
+                onChange={(e) => setNewBusiness(e.target.value)}
+              />
+              <p className="text-sm text-red-500"> {error}</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="name">Business Logo</Label>
+              <Input
+                id="logo"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const files = e.target.files;
+                  if (files && files.length > 0) {
+                    setFileUpload(files[0]);
+                  }
+                }}
+              />
             </div>
           </div>
         </div>
@@ -135,7 +239,9 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
           <Button variant="outline" onClick={() => setShowNewTeamDialog(false)}>
             Cancel
           </Button>
-          <Button type="submit">Continue</Button>
+          <Button isLoading={isLoading} type="submit" onClick={submitBusiness}>
+            Continue
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

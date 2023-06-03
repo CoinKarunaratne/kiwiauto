@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { ThemeProvider } from "next-themes";
 import type { FC, ReactNode } from "react";
 import { Toaster } from "@/app/components/ui/toaster";
@@ -9,11 +10,21 @@ interface ProvidersProps {
 }
 
 const Providers: FC<ProvidersProps> = ({ children }) => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      {children}
-      <Toaster />
-    </ThemeProvider>
+    <>
+      {isMounted && (
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      )}
+    </>
   );
 };
 
