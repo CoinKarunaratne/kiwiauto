@@ -116,7 +116,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
       if (!newBusiness) {
         setError("Please add a valid business name");
         setLoading(false);
-        return;
+        return Promise.reject("Please add a valid business name");
       }
       if (fileUpload) {
         await uploadFile();
@@ -128,6 +128,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
           logo: url,
           createdAt: serverTimestamp(),
         });
+        setError("");
         setShowNewTeamDialog(false);
         setLoading(false);
         setNewBusiness("");
@@ -139,6 +140,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
         title: newBusiness,
         createdAt: serverTimestamp(),
       });
+      setError("");
       setShowNewTeamDialog(false);
       setLoading(false);
       setNewBusiness("");
@@ -271,7 +273,10 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                 placeholder="Car Grooming."
                 autoComplete="off"
                 value={newBusiness}
-                onChange={(e) => setNewBusiness(e.target.value)}
+                onChange={(e) => {
+                  setError("");
+                  setNewBusiness(e.target.value);
+                }}
               />
               <p className="text-sm text-red-500"> {error}</p>
             </div>
