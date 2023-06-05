@@ -29,12 +29,21 @@ import { Label } from "./ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { db } from "@/config/firebase";
 import { storage } from "@/config/firebase";
-import { addDoc, collection, getDocs } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+} from "firebase/firestore";
 import {
   getDownloadURL,
   ref as storageRef,
   uploadBytes,
 } from "firebase/storage";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/app/components/ui/use-toast";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
@@ -51,37 +60,55 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
   const [isLoading, setLoading] = React.useState<boolean>(false);
   const [fileUpload, setFileUpload] = React.useState<File | null>(null);
   const [error, setError] = React.useState<string>("");
+  const [businessesLoading, setBusinessesLoading] =
+    React.useState<boolean>(false);
+  const { toast } = useToast();
 
   const businessRef = collection(db, "Businesses");
   const getBusinessList = async () => {
     try {
-      const data = await getDocs(businessRef);
+      const data = await getDocs(query(businessRef, orderBy("createdAt")));
       const filteredData = data.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       }));
-      setBusinesses(filteredData);
+      return filteredData;
     } catch (error) {
       console.log(error);
     }
   };
 
+  const businessesQuery = useQuery({
+    queryKey: ["businesses"],
+    queryFn: getBusinessList,
+  });
+
   React.useEffect(() => {
-    const businessRefHook = collection(db, "Businesses");
-    const getBusinessListHook = async () => {
-      try {
-        const data = await getDocs(businessRefHook);
-        const filteredData = data.docs.map((doc) => ({
-          ...doc.data(),
-          id: doc.id,
-        }));
-        setBusinesses(filteredData);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getBusinessListHook();
-  }, []);
+    if (businessesQuery.isLoading) {
+      setBusinessesLoading(true);
+    }
+
+    if (businessesQuery.isError) {
+      setBusinessesLoading(true);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: JSON.stringify(businessesQuery.error),
+      });
+    }
+
+    if (businessesQuery.isSuccess) {
+      setBusinessesLoading(false);
+      setBusinesses(businessesQuery.data || []);
+    }
+  }, [
+    businessesQuery.isLoading,
+    businessesQuery.isError,
+    toast,
+    businessesQuery.error,
+    businessesQuery.isSuccess,
+    businessesQuery.data,
+  ]);
 
   const submitBusiness = async () => {
     try {
@@ -96,18 +123,28 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
         const url = await getDownloadURL(
           storageRef(storage, `businesses/${fileUpload?.name}`)
         );
-        await addDoc(businessRef, { title: newBusiness, logo: url });
+        await addDoc(businessRef, {
+          title: newBusiness,
+          logo: url,
+          createdAt: serverTimestamp(),
+        });
         setShowNewTeamDialog(false);
         setLoading(false);
         getBusinessList();
         setNewBusiness("");
+        setFileUpload(null);
+        setSelectedTeam(businesses.length);
         return;
       }
-      await addDoc(businessRef, { title: newBusiness });
+      await addDoc(businessRef, {
+        title: newBusiness,
+        createdAt: serverTimestamp(),
+      });
       setShowNewTeamDialog(false);
       setLoading(false);
       getBusinessList();
       setNewBusiness("");
+      setSelectedTeam(businesses.length);
     } catch (error) {
       console.log(error);
     }
@@ -146,7 +183,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
               />
               <AvatarFallback>$</AvatarFallback>
             </Avatar>
-            {businesses[selectedTeam]?.title}
+            {businessesLoading ? "Loading..." : businesses[selectedTeam]?.title}
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
