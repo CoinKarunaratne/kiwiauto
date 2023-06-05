@@ -42,7 +42,7 @@ import {
   ref as storageRef,
   uploadBytes,
 } from "firebase/storage";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/app/components/ui/use-toast";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
@@ -74,10 +74,15 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
       }));
       return filteredData;
     } catch (error) {
-      console.log(error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: JSON.stringify(error),
+      });
     }
   };
 
+  const queryClient = useQueryClient();
   const businessesQuery = useQuery({
     queryKey: ["businesses"],
     queryFn: getBusinessList,
@@ -90,11 +95,6 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
 
     if (businessesQuery.isError) {
       setBusinessesLoading(true);
-      toast({
-        variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: JSON.stringify(businessesQuery.error),
-      });
     }
 
     if (businessesQuery.isSuccess) {
@@ -130,7 +130,6 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
         });
         setShowNewTeamDialog(false);
         setLoading(false);
-        getBusinessList();
         setNewBusiness("");
         setFileUpload(null);
         setSelectedTeam(businesses.length);
@@ -142,11 +141,14 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
       });
       setShowNewTeamDialog(false);
       setLoading(false);
-      getBusinessList();
       setNewBusiness("");
       setSelectedTeam(businesses.length);
     } catch (error) {
-      console.log(error);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: JSON.stringify(error),
+      });
     }
   };
 
@@ -160,9 +162,26 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
         await uploadBytes(filesFolderRef, fileUpload);
       }
     } catch (err) {
-      console.log(err);
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: JSON.stringify(err),
+      });
     }
   };
+
+  const newBusinessMuatation = useMutation({
+    mutationFn: () => {
+      return submitBusiness();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["businesses"]);
+      toast({
+        title: "Success!",
+        description: "Successfully added your new business",
+      });
+    },
+  });
 
   return (
     <Dialog open={showNewTeamDialog} onOpenChange={setShowNewTeamDialog}>
@@ -276,7 +295,11 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
           <Button variant="outline" onClick={() => setShowNewTeamDialog(false)}>
             Cancel
           </Button>
-          <Button isLoading={isLoading} type="submit" onClick={submitBusiness}>
+          <Button
+            isLoading={isLoading}
+            type="submit"
+            onClick={() => newBusinessMuatation.mutate()}
+          >
             Continue
           </Button>
         </DialogFooter>
