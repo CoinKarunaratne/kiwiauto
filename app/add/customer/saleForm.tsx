@@ -21,6 +21,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/app/components/react-hook-form/form";
+import { submitCustomer } from "./submitFunction";
+import { useState } from "react";
 
 const saleFormSchema = z.object({
   name: z.string(),
@@ -33,7 +35,7 @@ const saleFormSchema = z.object({
   vehicle: z.string(),
 });
 
-type SaleFormValues = z.infer<typeof saleFormSchema>;
+export type SaleFormValues = z.infer<typeof saleFormSchema>;
 
 export function SaleForm() {
   const form = useForm<SaleFormValues>({
@@ -41,15 +43,32 @@ export function SaleForm() {
     mode: "onChange",
   });
 
+  const [loading, isLoading] = useState<boolean>(false);
+
   function onSubmit(data: SaleFormValues) {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+    isLoading(true);
+    submitCustomer(data)
+      .then(() => {
+        isLoading(false);
+        toast({
+          title: "You submitted the following values:",
+          description: (
+            <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+              <code className="text-white">
+                {JSON.stringify(data, null, 2)}
+              </code>
+            </pre>
+          ),
+        });
+      })
+      .catch((error) => {
+        isLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: JSON.stringify(error),
+        });
+      });
   }
 
   return (
@@ -146,7 +165,9 @@ export function SaleForm() {
           )}
         />
 
-        <Button type="submit">Update profile</Button>
+        <Button isLoading={loading} type="submit">
+          Submit
+        </Button>
       </form>
     </Form>
   );
