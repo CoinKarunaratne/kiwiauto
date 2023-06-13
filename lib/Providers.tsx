@@ -22,12 +22,12 @@ const Providers: FC<ProvidersProps> = ({ children }) => {
   return (
     <>
       {isMounted && (
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <QueryClientProvider client={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
-          </QueryClientProvider>
-          <Toaster />
-        </ThemeProvider>
+            <Toaster />
+          </ThemeProvider>
+        </QueryClientProvider>
       )}
     </>
   );

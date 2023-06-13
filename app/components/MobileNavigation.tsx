@@ -3,6 +3,7 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -17,7 +18,7 @@ const MobileNavigation: FC<MobileNavigationProps> = ({}) => {
   return (
     <Sheet>
       <SheetTrigger>
-        <Button variant="outline">
+        <Button variant="ghost">
           <Menu className="h-5 w-5" />
         </Button>
       </SheetTrigger>
@@ -59,6 +60,11 @@ const MobileNavigation: FC<MobileNavigationProps> = ({}) => {
             </nav>
           </SheetDescription>
         </SheetHeader>
+        <SheetFooter className="absolute bottom-5 w-32">
+          <Button className="bg-green-800" variant="outline">
+            Log out
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
