@@ -38,19 +38,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning={true}
-      className={cn("bg-white text-slate-900 antialiased", inter.className)}
+    <main
+      className={cn(
+        "bg-white text-slate-900 antialiased dark:text-white",
+        inter.className
+      )}
     >
-      <body
-        suppressHydrationWarning={true}
-        className="min-h-screen h-auto bg-slate-50 dark:bg-[rgb(3,7,17)] antialiased"
-      >
-        <Providers>
+      <Providers>
+        <div className="min-h-screen h-auto bg-slate-50 dark:bg-[rgb(3,7,17)] antialiased">
           <div className="flex-col flex min-h-screen h-auto">
             <Navigation />
-
             <div className="space-y-6 p-10 pb-16">
               <div className="space-y-0.5">
                 <h2 className="text-2xl font-bold tracking-tight">Add New</h2>
@@ -68,8 +65,8 @@ export default function RootLayout({
               </div>
             </div>
           </div>
-        </Providers>
-      </body>
-    </html>
+        </div>
+      </Providers>
+    </main>
   );
 }

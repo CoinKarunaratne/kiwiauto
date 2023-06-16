@@ -1,6 +1,6 @@
 import { db } from "@/config/firebase";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { SaleFormValues } from "./saleForm";
+import { SaleFormValues } from "./customerForm";
 
 const customerRef = collection(db, "Customers");
 

@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { Separator } from "../../components/ui/separator";
-import { SaleForm } from "./saleForm";
+import { SaleForm } from "./customerForm";
 
 const page: FC = ({}) => {
   return (

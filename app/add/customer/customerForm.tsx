@@ -23,12 +23,13 @@ import {
 } from "@/app/components/react-hook-form/form";
 import { submitCustomer } from "./submitFunction";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 const saleFormSchema = z.object({
   name: z.string(),
   contact: z.string(),
-  email: z.string().email().optional(),
-  address: z.string().optional(),
+  email: z.string().email().optional().default("customer@email.com"),
+  address: z.string().optional().default(""),
   type: z.string({
     required_error: "Please select a vehicle type",
   }),
@@ -44,10 +45,13 @@ export function SaleForm() {
   });
 
   const [loading, isLoading] = useState<boolean>(false);
+  const queryClient = useQueryClient();
+  const state = queryClient.getQueryState(["state"]);
 
   function onSubmit(data: SaleFormValues) {
     isLoading(true);
-    submitCustomer(data)
+    const updatedData = { ...data, businessID: state?.data };
+    submitCustomer(updatedData)
       .then(() => {
         isLoading(false);
         toast({

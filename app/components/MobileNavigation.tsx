@@ -18,9 +18,7 @@ const MobileNavigation: FC<MobileNavigationProps> = ({}) => {
   return (
     <Sheet>
       <SheetTrigger>
-        <Button variant="ghost">
-          <Menu className="h-5 w-5" />
-        </Button>
+        <Menu className="h-5 w-5" />
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>

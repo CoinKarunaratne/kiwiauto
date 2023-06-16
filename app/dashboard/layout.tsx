@@ -21,22 +21,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning={true}
-      className={cn("bg-white text-slate-900 antialiased", inter.className)}
+    <main
+      className={cn(
+        "bg-white text-slate-900 dark:text-white antialiased",
+        inter.className
+      )}
     >
-      <body
-        suppressHydrationWarning={true}
-        className="min-h-screen h-auto bg-slate-50 dark:bg-[rgb(3,7,17)] antialiased"
-      >
-        <Providers>
-          <div className="flex-col flex min-h-screen h-auto">
-            <Navigation />
-            {children}
-          </div>
-        </Providers>
-      </body>
-    </html>
+      <div className="min-h-screen h-auto bg-slate-50 dark:bg-[rgb(3,7,17)] antialiased">
+        <div className="flex-col flex min-h-screen h-auto">
+          <Navigation />
+          <Providers>{children}</Providers>
+        </div>
+      </div>
+    </main>
   );
 }

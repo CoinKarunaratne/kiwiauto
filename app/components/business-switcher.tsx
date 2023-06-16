@@ -36,6 +36,7 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  Timestamp,
 } from "firebase/firestore";
 import {
   getDownloadURL,
@@ -44,18 +45,28 @@ import {
 } from "firebase/storage";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/app/components/ui/use-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { setBusiness } from "@/lib/state";
 
 type PopoverTriggerProps = React.ComponentPropsWithoutRef<
   typeof PopoverTrigger
 >;
 
 interface TeamSwitcherProps extends PopoverTriggerProps {}
+type RootState = {
+  businessID: string;
+};
+interface Business {
+  createdAt: Timestamp;
+  title: string;
+  id: string;
+  logo?: string;
+}
 
 export default function TeamSwitcher({ className }: TeamSwitcherProps) {
   const [open, setOpen] = React.useState(false);
   const [showNewTeamDialog, setShowNewTeamDialog] = React.useState(false);
-  const [selectedTeam, setSelectedTeam] = React.useState<number>(0);
-  const [businesses, setBusinesses] = React.useState<Array<any>>([]);
+  const [businesses, setBusinesses] = React.useState<Business[]>([]);
   const [newBusiness, setNewBusiness] = React.useState<string>();
   const [isLoading, setLoading] = React.useState<boolean>(false);
   const [fileUpload, setFileUpload] = React.useState<File | null>(null);
@@ -63,6 +74,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
   const [businessesLoading, setBusinessesLoading] =
     React.useState<boolean>(false);
   const { toast } = useToast();
+  const dispatch = useDispatch();
 
   const businessRef = collection(db, "Businesses");
   const getBusinessList = async () => {
@@ -71,7 +83,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
       const filteredData = data.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
-      }));
+      })) as Business[];
       return filteredData;
     } catch (error) {
       toast({
@@ -110,6 +122,11 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
     businessesQuery.data,
   ]);
 
+  const businessID = useSelector((state: RootState) => state.businessID);
+  const selectedBusiness = businesses.find(
+    (business) => business.id === businessID
+  );
+
   const submitBusiness = async () => {
     try {
       setLoading(true);
@@ -133,7 +150,6 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
         setLoading(false);
         setNewBusiness("");
         setFileUpload(null);
-        setSelectedTeam(businesses.length);
         return;
       }
       await addDoc(businessRef, {
@@ -144,7 +160,6 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
       setShowNewTeamDialog(false);
       setLoading(false);
       setNewBusiness("");
-      setSelectedTeam(businesses.length);
     } catch (error) {
       toast({
         variant: "destructive",
@@ -176,8 +191,19 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
     mutationFn: () => {
       return submitBusiness();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["businesses"]);
+    onSuccess: async () => {
+      await queryClient.invalidateQueries(["businesses"]);
+      await queryClient.refetchQueries(["businesses"]); // Wait for the query to refetch
+      const updatedBusinesses = queryClient.getQueryData<Business[]>([
+        "businesses",
+      ]);
+      const latestBusiness = updatedBusinesses?.[updatedBusinesses.length - 1];
+      await dispatch(
+        setBusiness({
+          businessID: latestBusiness?.id,
+        })
+      );
+
       toast({
         title: "Success!",
         description: "Successfully added your new business",
@@ -199,12 +225,12 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
           >
             <Avatar className="mr-2 h-5 w-5">
               <AvatarImage
-                src={businesses[selectedTeam]?.logo}
-                alt={businesses[selectedTeam]?.title}
+                src={selectedBusiness?.logo}
+                alt={selectedBusiness?.title}
               />
               <AvatarFallback>$</AvatarFallback>
             </Avatar>
-            {businessesLoading ? "Loading..." : businesses[selectedTeam]?.title}
+            {businessesLoading ? "Loading..." : selectedBusiness?.title}
             <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -218,7 +244,11 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                   <CommandItem
                     key={index}
                     onSelect={() => {
-                      setSelectedTeam(index);
+                      dispatch(
+                        setBusiness({
+                          businessID: group.id,
+                        })
+                      );
                       setOpen(false);
                     }}
                     className="text-sm"
@@ -231,7 +261,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                     <Check
                       className={cn(
                         "ml-auto h-4 w-4",
-                        selectedTeam === index ? "opacity-100" : "opacity-0"
+                        businessID === group.id ? "opacity-100" : "opacity-0"
                       )}
                     />
                   </CommandItem>

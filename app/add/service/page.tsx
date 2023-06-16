@@ -1,6 +1,6 @@
 import { FC } from "react";
 import { Separator } from "../../components/ui/separator";
-import { SaleForm } from "./saleForm";
+import { ServiceForm } from "./serviceForm";
 
 const page: FC = ({}) => {
   return (
@@ -9,7 +9,7 @@ const page: FC = ({}) => {
         <h3 className="text-lg font-medium">New Service</h3>
       </div>
       <Separator />
-      <SaleForm />
+      <ServiceForm />
     </div>
   );
 };
