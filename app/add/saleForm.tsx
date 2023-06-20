@@ -1,13 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import * as z from "zod";
-
-import { cn } from "@/lib/utils";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
+
+import { toast } from "@/app/components/ui/use-toast";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/app/components/react-hook-form/form";
 import {
   Select,
   SelectContent,
@@ -15,73 +22,97 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/app/components/ui/select";
-import { toast } from "@/app/components/ui/use-toast";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/app/components/react-hook-form/form";
+import { submitSale } from "./submitFunction";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import CustomerSwitcher from "./customerSwitcher";
+import ServiceSwitcher from "./serviceSwitcher";
 
 const saleFormSchema = z.object({
-  customer: z
-    .string()
-    .min(2, {
-      message: "Username must be at least 2 characters.",
-    })
-    .max(30, {
-      message: "Username must not be longer than 30 characters.",
-    }),
-  email: z
-    .string({
-      required_error: "Please select an email to display.",
-    })
-    .email(),
-  bio: z.string().max(160).min(4),
-  urls: z
-    .array(
-      z.object({
-        value: z.string().url({ message: "Please enter a valid URL." }),
-      })
-    )
-    .optional(),
+  customer: z.string().min(1, {
+    message: "Please enter customer name.",
+  }),
+  service: z.string().min(1, {
+    message: "Please enter a service.",
+  }),
+  price: z.string().min(1, {
+    message: "Please enter a valid price.",
+  }),
+  status: z.string().min(1, {
+    message: "Please select the status.",
+  }),
 });
 
-type SaleFormValues = z.infer<typeof saleFormSchema>;
-
-// This can come from your database or API.
-const defaultValues: Partial<SaleFormValues> = {
-  bio: "I own a computer.",
-  urls: [
-    { value: "https://shadcn.com" },
-    { value: "http://twitter.com/shadcn" },
-  ],
+export type SaleFormValues = z.infer<typeof saleFormSchema>;
+type RootState = {
+  businessID: string;
 };
 
 export function SaleForm() {
   const form = useForm<SaleFormValues>({
     resolver: zodResolver(saleFormSchema),
-    defaultValues,
     mode: "onChange",
   });
 
-  const { fields, append } = useFieldArray({
-    name: "urls",
-    control: form.control,
-  });
+  const [loading, isLoading] = useState<boolean>(false);
+  const [isCustomerSelected, setCustomerSelected] = useState<boolean>(false);
+  const [isServiceSelected, setServiceSelected] = useState<boolean>(false);
+  const [serviceID, setServiceID] = useState<string>("");
+  const [customerID, setCustomerID] = useState<string>("");
+
+  const businessID = useSelector((state: RootState) => state.businessID);
+
+  const formReset = () => {
+    form.setValue("customer", "");
+    form.setValue("service", "");
+    form.setValue("price", "");
+  };
+
+  useEffect(() => {
+    formReset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const setCustomer = (data: string, id: string) => {
+    form.setValue("customer", data);
+    setCustomerID(id);
+  };
+
+  const setService = (name: string, fee: string, id: string) => {
+    form.setValue("service", name);
+    form.setValue("price", fee);
+    setServiceID(id);
+  };
 
   function onSubmit(data: SaleFormValues) {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+    isLoading(true);
+    setServiceSelected(false);
+    setCustomerSelected(false);
+    const updatedData = { ...data, businessID };
+    submitSale(updatedData, serviceID, customerID)
+      .then(() => {
+        isLoading(false);
+        formReset();
+        toast({
+          title: "You submitted the following values:",
+          description: (
+            <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+              <code className="text-white">
+                {JSON.stringify(data, null, 2)}
+              </code>
+            </pre>
+          ),
+        });
+      })
+      .catch((error) => {
+        isLoading(false);
+        formReset();
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: JSON.stringify(error),
+        });
+      });
   }
 
   return (
@@ -89,81 +120,84 @@ export function SaleForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="username"
+          name="customer"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel>Customer Name</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <div>
+                  <CustomerSwitcher
+                    {...field}
+                    setCustomer={setCustomer}
+                    isSelected={isCustomerSelected}
+                    setSelected={setCustomerSelected}
+                    className="w-[400px]"
+                  />
+                </div>
               </FormControl>
-              <FormDescription>
-                This is your public display name. It can be your real name or a
-                pseudonym. You can only change this once every 30 days.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
           control={form.control}
-          name="email"
+          name="service"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Service</FormLabel>
+              <FormControl>
+                <div>
+                  <ServiceSwitcher
+                    {...field}
+                    setService={setService}
+                    isSelected={isServiceSelected}
+                    setSelected={setServiceSelected}
+                    className="w-[400px]"
+                  />
+                </div>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="price"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Price</FormLabel>
+              <FormControl>
+                <Input {...field} className="w-[400px]" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="status"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Status</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a verified email to display" />
+                  <SelectTrigger className="w-[400px]">
+                    <SelectValue placeholder="Select the status of the sale" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="m@example.com">m@example.com</SelectItem>
-                  <SelectItem value="m@google.com">m@google.com</SelectItem>
-                  <SelectItem value="m@support.com">m@support.com</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
                 </SelectContent>
               </Select>
-              <FormDescription>
-                You can manage verified email addresses in your{" "}
-                <Link href="/examples/forms">email settings</Link>.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
 
-        <div>
-          {fields.map((field, index) => (
-            <FormField
-              control={form.control}
-              key={field.id}
-              name={`urls.${index}.value`}
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className={cn(index !== 0 && "sr-only")}>
-                    URLs
-                  </FormLabel>
-                  <FormDescription className={cn(index !== 0 && "sr-only")}>
-                    Add links to your website, blog, or social media profiles.
-                  </FormDescription>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          ))}
-          <Button
-            type="button"
-            variant="link"
-            size="sm"
-            className="mt-1"
-            onClick={() => append({ value: "" })}
-          >
-            Add URL
-          </Button>
-        </div>
-        <Button type="submit">Update profile</Button>
+        <Button isLoading={loading} type="submit">
+          Submit
+        </Button>
       </form>
     </Form>
   );

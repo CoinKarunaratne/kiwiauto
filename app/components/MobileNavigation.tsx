@@ -26,31 +26,37 @@ const MobileNavigation: FC<MobileNavigationProps> = ({}) => {
           <SheetDescription>
             <nav className="flex flex-col justify-start gap-4 mt-10">
               <Link
-                href="/examples/dashboard"
+                href="/dashboard"
                 className="text-sm font-medium transition-colors hover:text-primary"
               >
                 Overview
               </Link>
               <Link
-                href="/examples/dashboard"
+                href="/customers"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 Customers
               </Link>
               <Link
-                href="/examples/dashboard"
+                href="/products"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 Products
               </Link>
               <Link
-                href="/examples/dashboard"
+                href="/sales"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 Sales
               </Link>
               <Link
-                href="/examples/dashboard"
+                href="/add"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                Add New
+              </Link>
+              <Link
+                href="/settings"
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 Settings

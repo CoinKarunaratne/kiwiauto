@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   businessID: "bOrNKUaTVF7dc01hh29m",
+  businessName: "Car Grooming",
 };
 
 export const businessSlice = createSlice({
@@ -10,6 +11,7 @@ export const businessSlice = createSlice({
   reducers: {
     setBusiness: (state, action) => {
       state.businessID = action.payload.businessID;
+      state.businessName = action.payload.businessName;
     },
   },
 });

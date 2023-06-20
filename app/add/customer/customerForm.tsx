@@ -22,21 +22,26 @@ import {
   FormMessage,
 } from "@/app/components/react-hook-form/form";
 import { submitCustomer } from "./submitFunction";
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 const saleFormSchema = z.object({
-  name: z.string(),
-  contact: z.string(),
-  email: z.string().email().optional().default("customer@email.com"),
-  address: z.string().optional().default(""),
-  type: z.string({
-    required_error: "Please select a vehicle type",
+  name: z.string().min(1, {
+    message: "Please enter customer name.",
   }),
-  vehicle: z.string(),
+  contact: z.string().min(1, {
+    message: "Please enter customer's contact",
+  }),
+  email: z.string().optional(),
+  address: z.string().optional(),
+  type: z.string().optional(),
+  vehicle: z.string().optional(),
 });
 
 export type SaleFormValues = z.infer<typeof saleFormSchema>;
+type RootState = {
+  businessID: string;
+};
 
 export function SaleForm() {
   const form = useForm<SaleFormValues>({
@@ -45,15 +50,29 @@ export function SaleForm() {
   });
 
   const [loading, isLoading] = useState<boolean>(false);
-  const queryClient = useQueryClient();
-  const state = queryClient.getQueryState(["state"]);
+  const businessID = useSelector((state: RootState) => state.businessID);
+
+  const formReset = () => {
+    form.setValue("name", ""); // Set initial value for "name" field
+    form.setValue("contact", ""); // Set initial value for "contact" field
+    form.setValue("email", ""); // Set initial value for "email" field
+    form.setValue("address", ""); // Set initial value for "address" field
+    form.setValue("vehicle", ""); // Set initial value for "vehicle" field
+    form.setValue("type", ""); // Set initial value for "type" field
+  };
+
+  useEffect(() => {
+    formReset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function onSubmit(data: SaleFormValues) {
     isLoading(true);
-    const updatedData = { ...data, businessID: state?.data };
+    const updatedData = { ...data, businessID };
     submitCustomer(updatedData)
       .then(() => {
         isLoading(false);
+        formReset();
         toast({
           title: "You submitted the following values:",
           description: (
@@ -67,6 +86,7 @@ export function SaleForm() {
       })
       .catch((error) => {
         isLoading(false);
+        formReset();
         toast({
           variant: "destructive",
           title: "Uh oh! Something went wrong.",

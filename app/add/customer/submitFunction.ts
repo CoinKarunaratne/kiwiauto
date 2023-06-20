@@ -5,12 +5,8 @@ import { SaleFormValues } from "./customerForm";
 const customerRef = collection(db, "Customers");
 
 export const submitCustomer = async (data: SaleFormValues) => {
-  try {
-    await addDoc(customerRef, {
-      ...data,
-      createdAt: serverTimestamp(),
-    });
-  } catch (error) {
-    console.log(error);
-  }
+  await addDoc(customerRef, {
+    ...data,
+    createdAt: serverTimestamp(),
+  });
 };

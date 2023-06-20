@@ -17,16 +17,23 @@ import {
 } from "@/app/components/react-hook-form/form";
 import { submitService } from "./submitFunction";
 import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { Textarea } from "@/app/components/ui/textarea";
+import { useSelector } from "react-redux";
 
 const serviceFormSchema = z.object({
-  name: z.string(),
-  fee: z.string(),
-  description: z.string().optional().default(""),
+  name: z.string().min(1, {
+    message: "Please enter a name for your service.",
+  }),
+  fee: z.string().min(1, {
+    message: "Please enter service fee.",
+  }),
+  description: z.string().optional(),
 });
 
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>;
+type RootState = {
+  businessID: string;
+};
 
 export function ServiceForm() {
   const form = useForm<ServiceFormValues>({
@@ -40,36 +47,35 @@ export function ServiceForm() {
   });
 
   const [loading, isLoading] = useState<boolean>(false);
-  const queryClient = useQueryClient();
-  const state = queryClient.getQueryState(["state"]);
+  const businessID = useSelector((state: RootState) => state.businessID);
 
   function onSubmit(data: ServiceFormValues) {
     isLoading(true);
-    const updatedData = { ...data, businessID: state?.data, customers: [] };
-    console.log(state?.data);
-    // submitService(updatedData)
-    //   .then(() => {
-    //     isLoading(false);
-    //     toast({
-    //       title: "You submitted the following values:",
-    //       description: (
-    //         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-    //           <code className="text-white">
-    //             {JSON.stringify(data, null, 2)}
-    //           </code>
-    //         </pre>
-    //       ),
-    //     });
-    //   })
-    //   .catch((error) => {
-    //     console.log(error);
-    //     isLoading(false);
-    //     toast({
-    //       variant: "destructive",
-    //       title: "Uh oh! Something went wrong.",
-    //       description: JSON.stringify(error),
-    //     });
-    //   });
+    const updatedData = { ...data, businessID, customers: [] };
+    submitService(updatedData)
+      .then(() => {
+        isLoading(false);
+        toast({
+          title: "You submitted the following values:",
+          description: (
+            <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+              <code className="text-white">
+                {JSON.stringify(data, null, 2)}
+              </code>
+            </pre>
+          ),
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        isLoading(false);
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: JSON.stringify(error),
+        });
+      });
+    form.reset();
   }
 
   return (

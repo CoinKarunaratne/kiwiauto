@@ -113,14 +113,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
       setBusinessesLoading(false);
       setBusinesses(businessesQuery.data || []);
     }
-  }, [
-    businessesQuery.isLoading,
-    businessesQuery.isError,
-    toast,
-    businessesQuery.error,
-    businessesQuery.isSuccess,
-    businessesQuery.data,
-  ]);
+  }, [businessesQuery]);
 
   const businessID = useSelector((state: RootState) => state.businessID);
   const selectedBusiness = businesses.find(
@@ -201,6 +194,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
       await dispatch(
         setBusiness({
           businessID: latestBusiness?.id,
+          businessName: latestBusiness?.title,
         })
       );
 
@@ -247,6 +241,7 @@ export default function TeamSwitcher({ className }: TeamSwitcherProps) {
                       dispatch(
                         setBusiness({
                           businessID: group.id,
+                          businessName: group.title,
                         })
                       );
                       setOpen(false);
