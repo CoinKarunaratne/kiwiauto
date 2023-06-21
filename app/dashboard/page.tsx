@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Activity,
   CreditCard,
@@ -23,8 +25,74 @@ import {
 import { CalendarDateRangePicker } from "../components/date-range-picker";
 import { Overview } from "../components/overview";
 import { RecentSales } from "../components/recent-sales";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  Timestamp,
+} from "firebase/firestore";
+import { db } from "@/config/firebase";
+import { SaleFormValues } from "../add/saleForm";
+import { useEffect, useState } from "react";
+import { useToast } from "@/app/components/ui/use-toast";
+
+export type Sale = SaleFormValues & {
+  id: string;
+  businessID: string;
+  customerID: string;
+  createdAt: Timestamp;
+  status: "paid" | "pending";
+};
 
 export default function DashboardPage() {
+  const [businessesLoading, setSalesLoading] = useState<boolean>(false);
+
+  const salesRef = collection(db, "Sales");
+  const { toast } = useToast();
+
+  const getSalesList = async () => {
+    try {
+      const data = await getDocs(query(salesRef, orderBy("createdAt")));
+      const filteredData = data.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      })) as Sale[];
+      return filteredData;
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: JSON.stringify(error),
+      });
+    }
+  };
+
+  const salesQuery = useQuery({
+    queryKey: ["sales"],
+    queryFn: getSalesList,
+  });
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (salesQuery.isLoading) {
+      setSalesLoading(true);
+    }
+
+    if (salesQuery.isError) {
+      setSalesLoading(true);
+    }
+
+    if (salesQuery.isSuccess) {
+      setSalesLoading(false);
+      queryClient.invalidateQueries(["sales"]);
+      queryClient.refetchQueries(["sales"]);
+      const updatedSales = queryClient.getQueryData<Sale[]>(["sales"]);
+      console.log(updatedSales);
+    }
+  }, [salesQuery]);
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 gap-4">

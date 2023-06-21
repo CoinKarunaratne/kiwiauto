@@ -88,7 +88,7 @@ export function SaleForm() {
     isLoading(true);
     setServiceSelected(false);
     setCustomerSelected(false);
-    const updatedData = { ...data, businessID };
+    const updatedData = { ...data, businessID, customerID };
     submitSale(updatedData, serviceID, customerID)
       .then(() => {
         isLoading(false);

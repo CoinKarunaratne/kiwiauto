@@ -25,7 +25,7 @@ import { submitCustomer } from "./submitFunction";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
-const saleFormSchema = z.object({
+const customerFormSchema = z.object({
   name: z.string().min(1, {
     message: "Please enter customer name.",
   }),
@@ -38,14 +38,14 @@ const saleFormSchema = z.object({
   vehicle: z.string().optional(),
 });
 
-export type SaleFormValues = z.infer<typeof saleFormSchema>;
+export type CustomerFormValues = z.infer<typeof customerFormSchema>;
 type RootState = {
   businessID: string;
 };
 
 export function SaleForm() {
-  const form = useForm<SaleFormValues>({
-    resolver: zodResolver(saleFormSchema),
+  const form = useForm<CustomerFormValues>({
+    resolver: zodResolver(customerFormSchema),
     mode: "onChange",
   });
 
@@ -66,7 +66,7 @@ export function SaleForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function onSubmit(data: SaleFormValues) {
+  function onSubmit(data: CustomerFormValues) {
     isLoading(true);
     const updatedData = { ...data, businessID };
     submitCustomer(updatedData)
