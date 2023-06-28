@@ -12,6 +12,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { CheckCircle2, Circle } from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -23,10 +25,9 @@ import {
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
-import { Sales } from "./page";
 import { CalendarDateRangePicker } from "../components/date-range-picker";
 import { DateRange } from "react-day-picker";
-import { Timestamp } from "firebase/firestore";
+import { DataTableFacetedFilter } from "./facet-filter";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -55,11 +56,25 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
   const [data, setData] = useState(initialData);
   const [isShowAll, setShowAll] = useState(false);
+  const [toggle, setToggle] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const businessID = useSelector((state: RootState) => state.businessID);
   const businessName = useSelector((state: RootState) => state.businessName);
+  const statuses = [
+    {
+      value: "pending",
+      label: "Pending",
+      icon: Circle,
+    },
+
+    {
+      value: "paid",
+      label: "Paid",
+      icon: CheckCircle2,
+    },
+  ];
 
   useEffect(() => {
     function fetchData() {
@@ -74,7 +89,7 @@ export function DataTable<TData, TValue>({
     }
 
     fetchData();
-  }, [businessID, isShowAll, initialData]);
+  }, [businessID, isShowAll, initialData, toggle]);
 
   const dateRangeData = (range: DateRange | undefined) => {
     const options: Intl.DateTimeFormatOptions = {
@@ -129,14 +144,23 @@ export function DataTable<TData, TValue>({
           }
           className="max-w-sm"
         /> */}
-        <Button
-          variant="outline"
-          className="sm:mr-auto"
-          onClick={() => setShowAll((state) => !state)}
-        >
-          {isShowAll ? `Show ${businessName} sales` : "Show all sales"}
-        </Button>
-        <CalendarDateRangePicker dateRangeData={dateRangeData} />
+        <div className="sm:mr-auto flex flex-col md:flex-row gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowAll((state) => !state)}
+          >
+            {isShowAll ? `Show ${businessName} sales` : "Show all sales"}
+          </Button>
+          <DataTableFacetedFilter
+            column={table.getColumn("status")}
+            title="Status"
+            options={statuses}
+          />
+        </div>
+        <CalendarDateRangePicker
+          setToggle={setToggle}
+          dateRangeData={dateRangeData}
+        />
       </div>
       <div className="rounded-md border">
         <Table>

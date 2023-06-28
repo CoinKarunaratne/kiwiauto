@@ -14,8 +14,10 @@ import { toast } from "@/app/components/ui/use-toast";
 export function CalendarDateRangePicker({
   className,
   dateRangeData,
+  setToggle,
 }: React.HTMLAttributes<HTMLDivElement> & {
   dateRangeData: (range: DateRange | undefined) => void;
+  setToggle: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: undefined,
@@ -69,6 +71,7 @@ export function CalendarDateRangePicker({
           if (date?.from) {
             if (isClear) {
               setDate({ from: undefined, to: undefined });
+              setToggle((toggle) => !toggle);
               setClear(false);
             } else {
               setClear(true);
