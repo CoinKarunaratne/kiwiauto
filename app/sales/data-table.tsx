@@ -23,8 +23,10 @@ import {
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
 import { Sales } from "./page";
+import { CalendarDateRangePicker } from "../components/date-range-picker";
+import { DateRange } from "react-day-picker";
+import { Timestamp } from "firebase/firestore";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -34,6 +36,17 @@ interface DataTableProps<TData, TValue> {
 type RootState = {
   businessID: string;
   businessName: string;
+};
+
+type ModifiedSales = {
+  id: string;
+  businessID: string;
+  customerID: string;
+  status: "paid" | "pending" | undefined;
+  createdAt: string | undefined;
+  customer: string | undefined;
+  service: string | undefined;
+  price: string | undefined;
 };
 
 export function DataTable<TData, TValue>({
@@ -51,7 +64,7 @@ export function DataTable<TData, TValue>({
   useEffect(() => {
     function fetchData() {
       const salesData = initialData.filter(
-        (doc: Sales) => doc?.businessID === businessID
+        (doc: ModifiedSales) => doc?.businessID === businessID
       );
       if (isShowAll) {
         setData(initialData);
@@ -62,6 +75,31 @@ export function DataTable<TData, TValue>({
 
     fetchData();
   }, [businessID, isShowAll, initialData]);
+
+  const dateRangeData = (range: DateRange | undefined) => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    };
+    if (range?.to === undefined) {
+      const startDate = range?.from?.toLocaleDateString("en-GB", options);
+      const rangeData = data.filter(
+        (doc: ModifiedSales) => doc.createdAt === startDate
+      );
+      setData(rangeData);
+    } else {
+      const startDate = range?.from?.toLocaleDateString("en-GB", options) ?? "";
+      const endDate = range?.to?.toLocaleDateString("en-GB", options) ?? "";
+      const rangeData = data.filter((doc: ModifiedSales) => {
+        const { createdAt } = doc;
+        if (createdAt) {
+          return createdAt >= startDate && createdAt <= endDate;
+        }
+      });
+      setData(rangeData);
+    }
+  };
 
   const table = useReactTable({
     data,
@@ -80,8 +118,8 @@ export function DataTable<TData, TValue>({
 
   return (
     <div>
-      <div className="flex items-center py-4">
-        <Input
+      <div className="flex flex-col items-end sm:flex-row sm:items-center py-4 gap-4">
+        {/* <Input
           placeholder="Filter customers...."
           value={
             (table.getColumn("customer")?.getFilterValue() as string) ?? ""
@@ -90,14 +128,15 @@ export function DataTable<TData, TValue>({
             table.getColumn("customer")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
-        />
+        /> */}
         <Button
           variant="outline"
-          className="ml-auto"
+          className="sm:mr-auto"
           onClick={() => setShowAll((state) => !state)}
         >
-          {isShowAll ? `Show ${businessName} customers` : "Show all customers"}
+          {isShowAll ? `Show ${businessName} sales` : "Show all sales"}
         </Button>
+        <CalendarDateRangePicker dateRangeData={dateRangeData} />
       </div>
       <div className="rounded-md border">
         <Table>

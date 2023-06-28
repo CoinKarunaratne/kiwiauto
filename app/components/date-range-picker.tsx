@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { addDays, format } from "date-fns";
+import { format } from "date-fns";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
@@ -9,17 +9,22 @@ import { cn } from "@/lib/utils";
 import { Button } from "./ui/button";
 import { Calendar } from "./ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { toast } from "@/app/components/ui/use-toast";
 
 export function CalendarDateRangePicker({
   className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+  dateRangeData,
+}: React.HTMLAttributes<HTMLDivElement> & {
+  dateRangeData: (range: DateRange | undefined) => void;
+}) {
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: new Date(2023, 0, 20),
-    to: addDays(new Date(2023, 0, 20), 20),
+    from: undefined,
+    to: undefined,
   });
+  const [isClear, setClear] = React.useState<boolean>(false);
 
   return (
-    <div className={cn("grid gap-2", className)}>
+    <div className={cn("flex gap-2", className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
@@ -57,6 +62,28 @@ export function CalendarDateRangePicker({
           />
         </PopoverContent>
       </Popover>
+      <Button
+        className="sm:mr-auto w-[100px] font-normal"
+        size="sm"
+        onClick={() => {
+          if (date?.from) {
+            if (isClear) {
+              setDate({ from: undefined, to: undefined });
+              setClear(false);
+            } else {
+              setClear(true);
+              dateRangeData(date);
+            }
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Please pick a date.",
+            });
+          }
+        }}
+      >
+        {isClear ? "Clear" : "Filter"}
+      </Button>
     </div>
   );
 }

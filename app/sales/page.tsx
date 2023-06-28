@@ -12,6 +12,11 @@ export type Sales = Sale & {
 
 async function getData(): Promise<Sales[]> {
   const salesRef = collection(db, "Sales");
+  const options: Intl.DateTimeFormatOptions = {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  };
 
   try {
     const data = await getDocs(query(salesRef, orderBy("createdAt")));
@@ -20,8 +25,11 @@ async function getData(): Promise<Sales[]> {
       ...(doc.data() as Sales),
       id: doc.id,
     }));
-    console.log(filteredData);
-    return filteredData as Sales[];
+    const salesData = filteredData.map((sales) => ({
+      ...sales,
+      createdAt: sales.createdAt?.toDate().toLocaleDateString("en-GB", options),
+    }));
+    return salesData as Sales[];
   } catch (error) {
     console.log(error);
     return [];
@@ -39,8 +47,8 @@ export default async function DemoPage() {
           Get a snapshot of your sales details.
         </p>
       </div>
-      <Separator className="my-6" />
-      <div className="container mx-auto py-10">
+      <Separator className="sm:my-6" />
+      <div className="sm:container mx-auto py-10">
         <DataTable columns={columns} data={data} />
       </div>
     </div>

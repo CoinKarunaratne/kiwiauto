@@ -5,10 +5,10 @@ import { Timestamp } from "firebase/firestore";
 
 export type Sale = {
   status: "paid" | "pending" | undefined;
-  date: Timestamp | undefined;
+  createdAt: Timestamp | undefined;
   customer: string | undefined;
   service: string | undefined;
-  amount: string | undefined;
+  price: string | undefined;
 };
 
 export const columns: ColumnDef<Sale>[] = [
@@ -17,7 +17,7 @@ export const columns: ColumnDef<Sale>[] = [
     header: "Status",
   },
   {
-    accessorKey: "date",
+    accessorKey: "createdAt",
     header: "Date",
   },
   {
@@ -29,7 +29,7 @@ export const columns: ColumnDef<Sale>[] = [
     header: "Service",
   },
   {
-    accessorKey: "amount",
+    accessorKey: "price",
     header: "Amount",
   },
 ];
