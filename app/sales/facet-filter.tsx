@@ -68,7 +68,6 @@ export function DataTableFacetedFilter<TData, TValue>({
                 return (
                   <CommandItem
                     key={option.value}
-                    className=""
                     onSelect={() => {
                       setSelectedValues(option.value);
                       column?.setFilterValue(option.value);

@@ -14,15 +14,15 @@ import { toast } from "@/app/components/ui/use-toast";
 export function CalendarDateRangePicker({
   className,
   dateRangeData,
-  setToggle,
+
+  date,
+  setDate,
 }: React.HTMLAttributes<HTMLDivElement> & {
-  dateRangeData: (range: DateRange | undefined) => void;
-  setToggle: React.Dispatch<React.SetStateAction<boolean>>;
+  dateRangeData: () => void;
+
+  date: DateRange | undefined;
+  setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
 }) {
-  const [date, setDate] = React.useState<DateRange | undefined>({
-    from: undefined,
-    to: undefined,
-  });
   const [isClear, setClear] = React.useState<boolean>(false);
 
   return (
@@ -65,27 +65,19 @@ export function CalendarDateRangePicker({
         </PopoverContent>
       </Popover>
       <Button
-        className="sm:mr-auto w-[100px] font-normal"
+        className={cn(
+          "sm:mr-auto w-[100px] font-normal transition-all",
+          date?.from != undefined ? "opacity-100" : "opacity-0",
+          date?.from != undefined ? "flex" : "hidden",
+          date?.from != undefined ? "translate-x-0" : "-translate-x-5"
+        )}
+        variant="destructive"
         size="sm"
         onClick={() => {
-          if (date?.from) {
-            if (isClear) {
-              setDate({ from: undefined, to: undefined });
-              setToggle((toggle) => !toggle);
-              setClear(false);
-            } else {
-              setClear(true);
-              dateRangeData(date);
-            }
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Please pick a date.",
-            });
-          }
+          setDate({ from: undefined, to: undefined });
         }}
       >
-        {isClear ? "Clear" : "Filter"}
+        Clear
       </Button>
     </div>
   );

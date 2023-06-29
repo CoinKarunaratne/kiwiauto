@@ -28,6 +28,7 @@ import { Button } from "../components/ui/button";
 import { CalendarDateRangePicker } from "../components/date-range-picker";
 import { DateRange } from "react-day-picker";
 import { DataTableFacetedFilter } from "./facet-filter";
+import { ModifiedSales } from "./page";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -39,26 +40,18 @@ type RootState = {
   businessName: string;
 };
 
-type ModifiedSales = {
-  id: string;
-  businessID: string;
-  customerID: string;
-  status: "paid" | "pending" | undefined;
-  createdAt: string | undefined;
-  customer: string | undefined;
-  service: string | undefined;
-  price: string | undefined;
-};
-
 export function DataTable<TData, TValue>({
   columns,
   data: initialData,
 }: DataTableProps<TData, TValue>) {
   const [data, setData] = useState(initialData);
   const [isShowAll, setShowAll] = useState(false);
-  const [toggle, setToggle] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
+  });
 
   const businessID = useSelector((state: RootState) => state.businessID);
   const businessName = useSelector((state: RootState) => state.businessName);
@@ -77,42 +70,73 @@ export function DataTable<TData, TValue>({
   ];
 
   useEffect(() => {
-    function fetchData() {
-      const salesData = initialData.filter(
-        (doc: ModifiedSales) => doc?.businessID === businessID
-      );
-      if (isShowAll) {
-        setData(initialData);
-      } else {
-        setData(salesData);
-      }
-    }
-
-    fetchData();
-  }, [businessID, isShowAll, initialData, toggle]);
-
-  const dateRangeData = (range: DateRange | undefined) => {
     const options: Intl.DateTimeFormatOptions = {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
     };
-    if (range?.to === undefined) {
-      const startDate = range?.from?.toLocaleDateString("en-GB", options);
+    function fetchData() {
+      if (date?.to === undefined && date?.from != undefined) {
+        const startDate = date?.from?.toLocaleDateString("en-GB", options);
+        const rangeData = initialData.filter(
+          (doc: ModifiedSales) => doc.createdAt === startDate
+        );
+        setData(rangeData);
+      } else {
+        if (date?.to != undefined && date?.from != undefined) {
+          const startDate =
+            date?.from?.toLocaleDateString("en-GB", options) ?? "";
+          const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
+          const rangeData = initialData.filter((doc: ModifiedSales) => {
+            const { createdAt } = doc;
+            if (createdAt) {
+              return createdAt >= startDate && createdAt <= endDate;
+            }
+          });
+          setData(rangeData);
+        } else {
+          const salesData = initialData.filter(
+            (doc: ModifiedSales) => doc?.businessID === businessID
+          );
+          if (isShowAll) {
+            setData(initialData);
+          } else {
+            setData(salesData);
+          }
+        }
+      }
+    }
+
+    fetchData();
+  }, [businessID, isShowAll, initialData, date]);
+
+  const dateRangeData = () => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    };
+    if (date?.to === undefined && date?.from != undefined) {
+      const startDate = date?.from?.toLocaleDateString("en-GB", options);
       const rangeData = data.filter(
         (doc: ModifiedSales) => doc.createdAt === startDate
       );
       setData(rangeData);
     } else {
-      const startDate = range?.from?.toLocaleDateString("en-GB", options) ?? "";
-      const endDate = range?.to?.toLocaleDateString("en-GB", options) ?? "";
-      const rangeData = data.filter((doc: ModifiedSales) => {
-        const { createdAt } = doc;
-        if (createdAt) {
-          return createdAt >= startDate && createdAt <= endDate;
-        }
-      });
-      setData(rangeData);
+      if (date != undefined) {
+        const startDate =
+          date?.from?.toLocaleDateString("en-GB", options) ?? "";
+        const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
+        const rangeData = data.filter((doc: ModifiedSales) => {
+          const { createdAt } = doc;
+          if (createdAt) {
+            return createdAt >= startDate && createdAt <= endDate;
+          }
+        });
+        setData(rangeData);
+      } else {
+        return;
+      }
     }
   };
 
@@ -158,8 +182,9 @@ export function DataTable<TData, TValue>({
           />
         </div>
         <CalendarDateRangePicker
-          setToggle={setToggle}
           dateRangeData={dateRangeData}
+          date={date}
+          setDate={setDate}
         />
       </div>
       <div className="rounded-md border">
