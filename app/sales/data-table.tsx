@@ -29,6 +29,7 @@ import { CalendarDateRangePicker } from "../components/date-range-picker";
 import { DateRange } from "react-day-picker";
 import { DataTableFacetedFilter } from "./facet-filter";
 import { ModifiedSales } from "./page";
+import { DataTablePagination } from "./table-pagination";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -76,28 +77,45 @@ export function DataTable<TData, TValue>({
       year: "numeric",
     };
     function fetchData() {
+      const salesData = initialData.filter(
+        (doc: ModifiedSales) => doc?.businessID === businessID
+      );
       if (date?.to === undefined && date?.from != undefined) {
         const startDate = date?.from?.toLocaleDateString("en-GB", options);
-        const rangeData = initialData.filter(
-          (doc: ModifiedSales) => doc.createdAt === startDate
-        );
-        setData(rangeData);
+        if (isShowAll) {
+          const rangeData = initialData.filter(
+            (doc: ModifiedSales) => doc.createdAt === startDate
+          );
+          setData(rangeData);
+        } else {
+          const rangeData = salesData.filter(
+            (doc: ModifiedSales) => doc.createdAt === startDate
+          );
+          setData(rangeData);
+        }
       } else {
         if (date?.to != undefined && date?.from != undefined) {
           const startDate =
             date?.from?.toLocaleDateString("en-GB", options) ?? "";
           const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
-          const rangeData = initialData.filter((doc: ModifiedSales) => {
-            const { createdAt } = doc;
-            if (createdAt) {
-              return createdAt >= startDate && createdAt <= endDate;
-            }
-          });
-          setData(rangeData);
+          if (isShowAll) {
+            const rangeData = initialData.filter((doc: ModifiedSales) => {
+              const { createdAt } = doc;
+              if (createdAt) {
+                return createdAt >= startDate && createdAt <= endDate;
+              }
+            });
+            setData(rangeData);
+          } else {
+            const rangeData = salesData.filter((doc: ModifiedSales) => {
+              const { createdAt } = doc;
+              if (createdAt) {
+                return createdAt >= startDate && createdAt <= endDate;
+              }
+            });
+            setData(rangeData);
+          }
         } else {
-          const salesData = initialData.filter(
-            (doc: ModifiedSales) => doc?.businessID === businessID
-          );
           if (isShowAll) {
             setData(initialData);
           } else {
@@ -156,7 +174,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div>
+    <div className="space-y-4">
       <div className="flex flex-col items-end sm:flex-row sm:items-center py-4 gap-4">
         {/* <Input
           placeholder="Filter customers...."
@@ -237,6 +255,7 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+      <DataTablePagination table={table} />
     </div>
   );
 }

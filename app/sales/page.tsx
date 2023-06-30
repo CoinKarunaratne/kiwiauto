@@ -12,7 +12,7 @@ import { db } from "@/config/firebase";
 import { Separator } from "../components/ui/separator";
 import { Timestamp } from "firebase/firestore";
 import { ColumnDef } from "@tanstack/react-table";
-import { Loader2, MoreHorizontal } from "lucide-react";
+import { ArrowUpDown, Loader2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import {
   DropdownMenu,
@@ -35,6 +35,7 @@ import {
 import { doc, updateDoc } from "firebase/firestore";
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/app/components/ui/use-toast";
+import { DataTableColumnHeader } from "./column-header";
 
 export type ModifiedSales = {
   id: string;
@@ -63,7 +64,7 @@ export default function DemoPage() {
     };
 
     try {
-      const data = await getDocs(query(salesRef, orderBy("createdAt")));
+      const data = await getDocs(query(salesRef, orderBy("createdAt", "desc")));
 
       const filteredData = data.docs.map((doc) => ({
         ...(doc.data() as ModifiedSales),
@@ -94,7 +95,9 @@ export default function DemoPage() {
     },
     {
       accessorKey: "createdAt",
-      header: "Date",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Date" />
+      ),
     },
     {
       accessorKey: "customer",
@@ -106,7 +109,9 @@ export default function DemoPage() {
     },
     {
       accessorKey: "price",
-      header: "Amount",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Amount" />
+      ),
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("price"));
         const formatted = new Intl.NumberFormat("en-US", {
