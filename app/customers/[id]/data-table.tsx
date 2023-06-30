@@ -12,6 +12,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { CheckCircle2, Circle } from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -21,48 +23,78 @@ import {
   TableRow,
 } from "@/app/components/ui/table";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import { Button } from "../components/ui/button";
-import { ModifiedCustomers } from "./page";
+import { DateRange } from "react-day-picker";
+import { DataTableFacetedFilter } from "./facet-filter";
+import { ModifiedSales } from "@/app/sales/page";
 import { DataTablePagination } from "./table-pagination";
-import { Input } from "../components/ui/input";
+import { CustomerDateRangePicker } from "./date-range-picker";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: any;
 }
 
-type RootState = {
-  businessID: string;
-  businessName: string;
-};
-
 export function DataTable<TData, TValue>({
   columns,
   data: initialData,
 }: DataTableProps<TData, TValue>) {
   const [data, setData] = useState(initialData);
-  const [isShowAll, setShowAll] = useState(false);
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
+  });
 
-  const businessID = useSelector((state: RootState) => state.businessID);
-  const businessName = useSelector((state: RootState) => state.businessName);
+  const statuses = [
+    {
+      value: "pending",
+      label: "Pending",
+      icon: Circle,
+    },
+
+    {
+      value: "paid",
+      label: "Paid",
+      icon: CheckCircle2,
+    },
+  ];
 
   useEffect(() => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    };
     function fetchData() {
-      const salesData = initialData.filter(
-        (doc: ModifiedCustomers) => doc?.businessID === businessID
-      );
+      if (date?.to === undefined && date?.from != undefined) {
+        const startDate = date?.from?.toLocaleDateString("en-GB", options);
 
-      if (isShowAll) {
-        setData(initialData);
+        const rangeData = initialData.filter(
+          (doc: ModifiedSales) => doc.createdAt === startDate
+        );
+        setData(rangeData);
       } else {
-        setData(salesData);
+        if (date?.to != undefined && date?.from != undefined) {
+          const startDate =
+            date?.from?.toLocaleDateString("en-GB", options) ?? "";
+          const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
+
+          const rangeData = initialData.filter((doc: ModifiedSales) => {
+            const { createdAt } = doc;
+            if (createdAt) {
+              return createdAt >= startDate && createdAt <= endDate;
+            }
+          });
+          setData(rangeData);
+        } else {
+          setData(initialData);
+        }
       }
     }
+
     fetchData();
-  }, [businessID, isShowAll, initialData]);
+  }, [initialData, date]);
 
   const table = useReactTable({
     data,
@@ -81,22 +113,15 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-row justify-between">
-        <Button
-          variant="outline"
-          className="sm:mr-auto"
-          onClick={() => setShowAll((state) => !state)}
-        >
-          {isShowAll ? `Show ${businessName} customers` : "Show all customers"}
-        </Button>
-        <Input
-          placeholder="Filter customers...."
-          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("name")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+      <div className="flex flex-col items-end sm:flex-row sm:items-center py-4 gap-4">
+        <div className="sm:ml-auto flex flex-col md:flex-row gap-2">
+          <DataTableFacetedFilter
+            column={table.getColumn("status")}
+            title="Status"
+            options={statuses}
+          />
+          <CustomerDateRangePicker date={date} setDate={setDate} />
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>

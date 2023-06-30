@@ -1,7 +1,7 @@
 "use client";
 
 import { DataTable } from "./data-table";
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "@/config/firebase";
 import { Separator } from "../components/ui/separator";
 import { Timestamp } from "firebase/firestore";
@@ -19,6 +19,7 @@ import {
 import { useEffect, useState } from "react";
 import { ModifiedSales } from "../sales/page";
 import { DataTableColumnHeader } from "./column-header";
+import Link from "next/link";
 
 export type ModifiedCustomers = {
   id: string;
@@ -136,12 +137,8 @@ export default function DemoPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem
-                onClick={() => {
-                  return;
-                }}
-              >
-                View customer
+              <DropdownMenuItem>
+                <Link href={`/customers/${customer.id}`}>View customer</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

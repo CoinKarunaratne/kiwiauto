@@ -2,15 +2,19 @@
 
 import { DataTable } from "./data-table";
 import {
+  Timestamp,
   collection,
   deleteDoc,
+  doc,
+  getDoc,
   getDocs,
   orderBy,
   query,
+  updateDoc,
+  where,
 } from "firebase/firestore";
 import { db } from "@/config/firebase";
-import { Separator } from "../components/ui/separator";
-import { Timestamp } from "firebase/firestore";
+import { Separator } from "../../components/ui/separator";
 import { ColumnDef } from "@tanstack/react-table";
 import { Loader2, MoreHorizontal } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
@@ -32,53 +36,90 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/app/components/ui/alert-dialog";
-import { doc, updateDoc } from "firebase/firestore";
-import { useEffect, useState, useRef } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/app/components/ui/card";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/app/components/ui/tabs";
 import { useToast } from "@/app/components/ui/use-toast";
+import { useEffect, useRef, useState } from "react";
+import { ModifiedSales } from "../../sales/page";
 import { DataTableColumnHeader } from "./column-header";
-import { Badge } from "../components/ui/badge";
+import { Badge } from "@/app/components/ui/badge";
 
-export type ModifiedSales = {
+export type ModifiedCustomers = {
   id: string;
   businessID: string;
-  customerID: string;
-  status: "paid" | "pending" | undefined;
+  address: string | undefined;
+  contact: string;
   createdAt: Timestamp | string | undefined;
-  customer: string | undefined;
-  service: string | undefined;
-  price: string | undefined;
+  email: string | undefined;
+  name: string;
+  type: string | undefined;
+  vehicle: string | undefined;
 };
 
-export default function DemoPage() {
-  const [data, setData] = useState<ModifiedSales[]>([]);
+type URL = {
+  params: {
+    id: string;
+  };
+};
+
+export default function DemoPage(url: URL) {
+  const [customer, setCustomer] = useState<ModifiedCustomers>({
+    id: "",
+    businessID: "",
+    address: "",
+    contact: "",
+    createdAt: "",
+    email: "",
+    name: "",
+    type: "",
+    vehicle: "",
+  });
+  const [sales, setSales] = useState<ModifiedSales[]>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
 
   const dialogRef = useRef<{ [key: string]: HTMLElement | null }>({});
   const { toast } = useToast();
 
-  async function getData() {
+  async function getData(id: string) {
+    const docRef = doc(db, "Customers", id);
+    const customerDoc = await getDoc(docRef);
+
+    return setCustomer({
+      ...(customerDoc.data() as ModifiedCustomers),
+      id: customerDoc.id,
+    });
+  }
+
+  async function getSales(id: string) {
     const salesRef = collection(db, "Sales");
-    const options: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    };
 
     try {
-      const data = await getDocs(query(salesRef, orderBy("createdAt", "desc")));
+      if (id !== undefined) {
+        console.log(id);
+        const data = await getDocs(
+          query(salesRef, where("customerID", "==", id), orderBy("createdAt"))
+        );
 
-      const filteredData = data.docs.map((doc) => ({
-        ...(doc.data() as ModifiedSales),
-        id: doc.id,
-      }));
-      const salesData = filteredData.map((sales) => ({
-        ...sales,
-        createdAt: (sales.createdAt as Timestamp)
-          .toDate()
-          .toLocaleDateString("en-GB", options),
-      }));
+        const filteredData = data.docs.map((doc) => ({
+          ...(doc.data() as ModifiedSales),
+          id: doc.id,
+        }));
 
-      return setData(salesData);
+        return setSales(filteredData);
+      } else {
+        return [];
+      }
     } catch (error) {
       console.log(error);
       return [];
@@ -86,8 +127,12 @@ export default function DemoPage() {
   }
 
   useEffect(() => {
-    getData();
-  }, []);
+    async function fetchData() {
+      await getData(url.params.id);
+      await getSales(url.params.id);
+    }
+    fetchData();
+  }, [url.params.id]);
 
   const columns: ColumnDef<ModifiedSales>[] = [
     {
@@ -107,10 +152,19 @@ export default function DemoPage() {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Date" />
       ),
-    },
-    {
-      accessorKey: "customer",
-      header: "Customer",
+      cell: ({ row }) => {
+        const sale = row.original;
+        const options: Intl.DateTimeFormatOptions = {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        };
+        const formatted = (sale.createdAt as Timestamp)
+          .toDate()
+          .toLocaleDateString("en-GB", options);
+
+        return <div className="font-medium">{formatted}</div>;
+      },
     },
     {
       accessorKey: "service",
@@ -164,7 +218,7 @@ export default function DemoPage() {
                         await setLoading(true);
                         const deleteSaleDoc = doc(db, "Sales", payment.id);
                         await deleteDoc(deleteSaleDoc);
-                        await getData();
+                        await getSales(customer.id);
                         await setLoading(false);
                         toast({
                           title: "Success!",
@@ -207,7 +261,7 @@ export default function DemoPage() {
                       await updateDoc(saleDoc, {
                         status: payment.status === "paid" ? "pending" : "paid",
                       });
-                      await getData();
+                      await getSales(customer.id);
                       await setLoading(false);
                     } catch (err) {
                       await setLoading(false);
@@ -234,14 +288,62 @@ export default function DemoPage() {
   return (
     <div className="space-y-6 p-10 pb-16">
       <div className="space-y-0.5">
-        <h2 className="text-2xl font-bold tracking-tight">Sales</h2>
+        <h2 className="text-2xl font-bold tracking-tight">{customer?.name}</h2>
         <p className="text-muted-foreground">
-          Get a snapshot of your sales details.
+          Here are the customer details of {customer?.name}
         </p>
       </div>
       <Separator className="sm:my-6" />
-      <div className="sm:container mx-auto py-10">
-        <DataTable columns={columns} data={data} />
+      <div className="container hidden md:flex mx-auto h-5 text-base justify-center space-x-4">
+        <div>{customer?.address}</div>
+        <Separator orientation="vertical" />
+        <div>{customer?.email}</div>
+        <Separator orientation="vertical" />
+        <div>{customer?.contact}</div>
+        <Separator orientation="vertical" />
+        <div>
+          {customer?.vehicle}{" "}
+          <span className="font-bold">{customer?.type}</span>
+        </div>
+      </div>
+
+      <div className="container hidden md:grid mx-auto py-10">
+        <DataTable columns={columns} data={sales} />
+      </div>
+      <div className="md:hidden">
+        <Tabs defaultValue="details" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="sales">Sales</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details" className="space-y-4 pt-14">
+            <div className="grid">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium"></CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2 text-sm">
+                  <div>{customer?.address}</div>
+                  <Separator />
+                  <div>{customer?.email}</div>
+                  <Separator />
+                  <div>{customer?.contact}</div>
+                  <Separator />
+                  <div>
+                    {customer?.vehicle}{" "}
+                    <span className="font-bold">{customer?.type}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+          <TabsContent value="sales" className="space-y-4 pt-4">
+            <div className="container mx-auto py-10">
+              <DataTable columns={columns} data={sales} />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
