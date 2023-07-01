@@ -19,6 +19,7 @@ import { submitService } from "./submitFunction";
 import { useState } from "react";
 import { Textarea } from "@/app/components/ui/textarea";
 import { useSelector } from "react-redux";
+import { Separator } from "@/app/components/ui/separator";
 
 const serviceFormSchema = z.object({
   name: z.string().min(1, {
@@ -33,6 +34,7 @@ const serviceFormSchema = z.object({
 export type ServiceFormValues = z.infer<typeof serviceFormSchema>;
 type RootState = {
   businessID: string;
+  businessName: string;
 };
 
 export function ServiceForm() {
@@ -48,6 +50,7 @@ export function ServiceForm() {
 
   const [loading, isLoading] = useState<boolean>(false);
   const businessID = useSelector((state: RootState) => state.businessID);
+  const businessName = useSelector((state: RootState) => state.businessName);
 
   function onSubmit(data: ServiceFormValues) {
     isLoading(true);
@@ -79,55 +82,68 @@ export function ServiceForm() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Service Name</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="fee"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Fee</FormLabel>
-              <FormControl>
-                <Input type="number" {...field} />
-              </FormControl>
-              <FormDescription>Enter the fee amount here.</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Description</FormLabel>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-              <FormDescription>
-                Provide additional details or description about the new service
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button isLoading={loading} type="submit">
-          Submit
-        </Button>
-      </form>
-    </Form>
+    <>
+      <div>
+        <h3 className="text-sm sm:text-lg font-medium">
+          {" "}
+          New Sale for <span className="font-bold">{businessName}</span>
+        </h3>
+      </div>
+      <Separator />
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-8 pt-10"
+        >
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Service Name</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="fee"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fee</FormLabel>
+                <FormControl>
+                  <Input type="number" {...field} />
+                </FormControl>
+                <FormDescription>Enter the fee amount here.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="description"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Description</FormLabel>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+                <FormDescription>
+                  Provide additional details or description about the new
+                  service
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button isLoading={loading} type="submit">
+            Submit
+          </Button>
+        </form>
+      </Form>
+    </>
   );
 }

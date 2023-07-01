@@ -5,20 +5,29 @@ import {
   updateDoc,
   arrayUnion,
   collection,
-  serverTimestamp,
+  Timestamp,
 } from "firebase/firestore";
-import { SaleFormValues } from "./saleForm";
+import { ModifiedSales } from "../sales/page";
 
 const salesRef = collection(db, "Sales");
 
+type submitSales = {
+  createdAt: Timestamp;
+  businessID: string;
+  customerID: string;
+  customer: string;
+  service: string;
+  price: string;
+  status: string;
+};
+
 export const submitSale = async (
-  data: SaleFormValues,
+  data: submitSales,
   id: string,
   customer: string
 ) => {
   await addDoc(salesRef, {
     ...data,
-    createdAt: serverTimestamp(),
   });
   const serviceDoc = doc(db, "Services", id);
   await updateDoc(serviceDoc, { customers: arrayUnion(customer) });

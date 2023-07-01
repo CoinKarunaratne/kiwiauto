@@ -189,6 +189,7 @@ export function DataTable<TData, TValue>({
         <div className="sm:mr-auto flex flex-col md:flex-row gap-2">
           <Button
             variant="outline"
+            className="h-auto"
             onClick={() => setShowAll((state) => !state)}
           >
             {isShowAll ? `Show ${businessName} sales` : "Show all sales"}

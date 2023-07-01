@@ -54,6 +54,8 @@ import { useEffect, useRef, useState } from "react";
 import { ModifiedSales } from "../../sales/page";
 import { DataTableColumnHeader } from "./column-header";
 import { Badge } from "@/app/components/ui/badge";
+import { useRouter } from "next/navigation";
+import UpdateCustomer from "./customer-update-form";
 
 export type ModifiedCustomers = {
   id: string;
@@ -85,16 +87,33 @@ export default function DemoPage(url: URL) {
     type: "",
     vehicle: "",
   });
+  const [updateCustomer, setUpdateCustomer] = useState<ModifiedCustomers>({
+    id: "",
+    businessID: "",
+    address: "",
+    contact: "",
+    createdAt: "",
+    email: "",
+    name: "",
+    type: "",
+    vehicle: "",
+  });
   const [sales, setSales] = useState<ModifiedSales[]>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
+  const [buttonLoading, setButtonLoading] = useState<boolean>(false);
 
   const dialogRef = useRef<{ [key: string]: HTMLElement | null }>({});
+  const editRef = useRef<HTMLButtonElement | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   async function getData(id: string) {
     const docRef = doc(db, "Customers", id);
     const customerDoc = await getDoc(docRef);
-
+    await setUpdateCustomer({
+      ...(customerDoc.data() as ModifiedCustomers),
+      id: customerDoc.id,
+    });
     return setCustomer({
       ...(customerDoc.data() as ModifiedCustomers),
       id: customerDoc.id,
@@ -106,7 +125,6 @@ export default function DemoPage(url: URL) {
 
     try {
       if (id !== undefined) {
-        console.log(id);
         const data = await getDocs(
           query(salesRef, where("customerID", "==", id), orderBy("createdAt"))
         );
@@ -133,6 +151,11 @@ export default function DemoPage(url: URL) {
     }
     fetchData();
   }, [url.params.id]);
+
+  async function fetchData() {
+    await getData(url.params.id);
+    await getSales(url.params.id);
+  }
 
   const columns: ColumnDef<ModifiedSales>[] = [
     {
@@ -287,11 +310,94 @@ export default function DemoPage(url: URL) {
 
   return (
     <div className="space-y-6 p-10 pb-16">
-      <div className="space-y-0.5">
-        <h2 className="text-2xl font-bold tracking-tight">{customer?.name}</h2>
-        <p className="text-muted-foreground">
-          Here are the customer details of {customer?.name}
-        </p>
+      <div className="space-y-0.5 flex justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {customer?.name}
+          </h2>
+          <p className="text-muted-foreground">
+            Here are the customer details of {customer?.name}
+          </p>
+        </div>
+        <div className="hidden md:flex gap-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button ref={editRef} className="hidden" variant="outline">
+                Show Dialog
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Edit Customer</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Make changes to your customer. Click save when you are done.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <UpdateCustomer
+                updateCustomer={updateCustomer}
+                setUpdateCustomer={setUpdateCustomer}
+              />
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    try {
+                      await setButtonLoading(true);
+                      const docRef = doc(db, "Customers", customer?.id);
+                      await updateDoc(docRef, updateCustomer);
+                      toast({
+                        title: "Success!",
+                        description: "Successfully updated customer record.",
+                      });
+                      await fetchData();
+                    } catch (err) {
+                      toast({
+                        variant: "destructive",
+                        title: "Uh oh! Something went wrong.",
+                      });
+                      console.log(err);
+                    }
+                  }}
+                >
+                  {buttonLoading && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}{" "}
+                  Save
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => editRef?.current?.click()}
+          >
+            Edit
+          </Button>
+          <Button
+            isLoading={buttonLoading}
+            onClick={async () => {
+              try {
+                await setButtonLoading(true);
+                const deleteCustomerDoc = doc(db, "Customers", customer?.id);
+                await deleteDoc(deleteCustomerDoc);
+                await setButtonLoading(false);
+                toast({
+                  title: "Success!",
+                  description: "Successfully deleted customer.",
+                });
+                router.push("/customers");
+              } catch (err) {
+                await setLoading(false);
+                console.log(err);
+              }
+            }}
+            size="sm"
+            variant="destructive"
+          >
+            Delete
+          </Button>
+        </div>
       </div>
       <Separator className="sm:my-6" />
       <div className="container hidden md:flex mx-auto h-5 text-base justify-center space-x-4">
@@ -317,7 +423,7 @@ export default function DemoPage(url: URL) {
             <TabsTrigger value="sales">Sales</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details" className="space-y-4 pt-14">
+          <TabsContent value="details" className="space-y-4 pt-5">
             <div className="grid">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -336,6 +442,42 @@ export default function DemoPage(url: URL) {
                   </div>
                 </CardContent>
               </Card>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => editRef?.current?.click()}
+              >
+                Edit
+              </Button>
+              <Button
+                isLoading={buttonLoading}
+                onClick={async () => {
+                  try {
+                    await setButtonLoading(true);
+                    const deleteCustomerDoc = doc(
+                      db,
+                      "Customers",
+                      customer?.id
+                    );
+                    await deleteDoc(deleteCustomerDoc);
+                    await setButtonLoading(false);
+                    toast({
+                      title: "Success!",
+                      description: "Successfully deleted customer.",
+                    });
+                    router.push("/customers");
+                  } catch (err) {
+                    await setLoading(false);
+                    console.log(err);
+                  }
+                }}
+                size="sm"
+                variant="destructive"
+              >
+                Delete
+              </Button>
             </div>
           </TabsContent>
           <TabsContent value="sales" className="space-y-4 pt-4">

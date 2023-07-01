@@ -81,10 +81,10 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-row justify-between">
+      <div className="flex flex-col md:flex-row justify-end md:justify-between gap-2">
         <Button
           variant="outline"
-          className="sm:mr-auto"
+          className="mr-auto"
           onClick={() => setShowAll((state) => !state)}
         >
           {isShowAll ? `Show ${businessName} customers` : "Show all customers"}
