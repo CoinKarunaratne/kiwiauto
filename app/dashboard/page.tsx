@@ -47,7 +47,7 @@ export type Sale = SaleFormValues & {
 };
 
 export default function DashboardPage() {
-  const [businessesLoading, setSalesLoading] = useState<boolean>(false);
+  const [salesLoading, setSalesLoading] = useState<boolean>(false);
 
   const salesRef = collection(db, "Sales");
   const { toast } = useToast();
@@ -91,7 +91,7 @@ export default function DashboardPage() {
       const updatedSales = queryClient.getQueryData<Sale[]>(["sales"]);
       console.log(updatedSales);
     }
-  }, [salesQuery]);
+  }, [salesQuery, queryClient]);
 
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">

@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import type { FC, ReactNode } from "react";
 import { Toaster } from "@/app/components/ui/toaster";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
 import businessReducer from "@/lib/state";
 import { configureStore } from "@reduxjs/toolkit";
@@ -47,6 +48,7 @@ const Providers: FC<ProvidersProps> = ({ children }) => {
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             {children}
             <Toaster />
+            <ReactQueryDevtools />
           </ThemeProvider>
         </PersistGate>
       </Provider>

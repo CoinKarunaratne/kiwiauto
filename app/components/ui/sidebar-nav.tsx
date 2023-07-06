@@ -7,10 +7,12 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/app/components/ui/button";
 
 interface SidebarNavProps extends React.HTMLAttributes<HTMLElement> {
-  items: {
-    href: string;
-    title: string;
-  }[];
+  items:
+    | {
+        href: string;
+        title: string;
+      }[]
+    | undefined;
 }
 
 export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
@@ -24,7 +26,7 @@ export function SidebarNav({ className, items, ...props }: SidebarNavProps) {
       )}
       {...props}
     >
-      {items.map((item) => (
+      {items?.map((item) => (
         <Link
           key={item.href}
           href={item.href}

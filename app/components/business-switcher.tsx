@@ -56,7 +56,7 @@ interface TeamSwitcherProps extends PopoverTriggerProps {}
 type RootState = {
   businessID: string;
 };
-interface Business {
+export interface Business {
   createdAt: Timestamp;
   title: string;
   id: string;
