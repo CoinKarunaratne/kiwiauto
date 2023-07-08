@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -63,8 +64,26 @@ const data = [
 
 export function Overview() {
   const isMobile = window.innerWidth <= 768;
+  const [chartHeight, setChartHeight] = useState(500); // Initial height, can be adjusted as needed
+
+  useEffect(() => {
+    function handleResize() {
+      const windowHeight = window.innerHeight;
+      const newChartHeight = windowHeight * 0.6; // Adjust the percentage as desired
+
+      setChartHeight(newChartHeight);
+    }
+
+    handleResize(); // Set initial height
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
   return (
-    <ResponsiveContainer width="100%" height={500}>
+    <ResponsiveContainer width="100%" height={chartHeight}>
       {isMobile ? (
         <LineChart data={data}>
           <XAxis

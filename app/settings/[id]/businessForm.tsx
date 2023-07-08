@@ -6,8 +6,7 @@ import { Label } from "@/app/components/ui/label";
 import { Separator } from "@/app/components/ui/separator";
 import { useToast } from "@/app/components/ui/use-toast";
 import React, { useEffect } from "react";
-import { useSelector } from "react-redux";
-import { collection, doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import {
   getDownloadURL,
   ref as storageRef,
@@ -17,15 +16,15 @@ import { storage } from "@/config/firebase";
 import { db } from "@/config/firebase";
 
 import { Business } from "@/app/components/business-switcher";
+import { useRouter } from "next/navigation";
 
 type Props = {
   slug: string;
 };
 
 const BusinessForm = ({ slug }: Props) => {
-  const businessName = useSelector(
-    (state: { businessName: string; businessID: string }) => state.businessName
-  );
+  const router = useRouter();
+
   const [fileUpload, setFileUpload] = React.useState<File | null>(null);
   const [error, setError] = React.useState<string>("");
   const [heading, setHeading] = React.useState<string>("");
@@ -78,6 +77,7 @@ const BusinessForm = ({ slug }: Props) => {
         toast({
           title: "Success!",
         });
+        router.push("/dashboard");
         return;
       }
       await updateDoc(businessDoc, {
@@ -88,6 +88,7 @@ const BusinessForm = ({ slug }: Props) => {
       toast({
         title: "Success!",
       });
+      router.push("/dashboard");
     } catch (error) {
       toast({
         variant: "destructive",

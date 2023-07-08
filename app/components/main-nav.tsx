@@ -1,11 +1,17 @@
+"use client";
+
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { useSelector } from "react-redux";
 
 export function MainNav({
   className,
   ...props
 }: React.HTMLAttributes<HTMLElement>) {
+  const businessID = useSelector(
+    (state: { businessName: string; businessID: string }) => state.businessID
+  );
   return (
     <nav
       className={cn("flex items-center space-x-4 lg:space-x-6", className)}
@@ -42,7 +48,7 @@ export function MainNav({
         Add New
       </Link>
       <Link
-        href="/settings"
+        href={`/settings/${businessID}`}
         className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         Settings
