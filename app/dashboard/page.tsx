@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  Activity,
-  CreditCard,
-  DollarSign,
-  Download,
-  Users,
-} from "lucide-react";
+import { Download } from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import {
@@ -37,6 +31,14 @@ import { db } from "@/config/firebase";
 import { SaleFormValues } from "../add/saleForm";
 import { useEffect, useState } from "react";
 import { useToast } from "@/app/components/ui/use-toast";
+import Status from "./status";
+import { DateRange } from "react-day-picker";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/app/components/ui/select";
 
 export type Sale = SaleFormValues & {
   id: string;
@@ -48,6 +50,15 @@ export type Sale = SaleFormValues & {
 
 export default function DashboardPage() {
   const [salesLoading, setSalesLoading] = useState<boolean>(false);
+  const [years, setYears] = useState<number[]>([]);
+  const [chartYear, setChartYear] = useState<string>();
+  const [initialData, setInitialData] = useState<Sale[] | undefined>([]);
+  const [businessSales, setBusinessSales] = useState<Sale[] | undefined>([]);
+  const [chartData, setChartData] = useState<Sale[] | undefined>([]);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: undefined,
+    to: undefined,
+  });
 
   const salesRef = collection(db, "Sales");
   const { toast } = useToast();
@@ -59,13 +70,23 @@ export default function DashboardPage() {
         ...doc.data(),
         id: doc.id,
       })) as Sale[];
-      return filteredData;
+      const yearsSet = new Set();
+      await filteredData.forEach((item) => {
+        const year = item.createdAt.toDate().getFullYear();
+        yearsSet.add(year);
+      });
+      const year = Array.from(yearsSet) as number[];
+      await setYears(year);
+      await setChartYear(year[year.length - 1]?.toString());
+      await setInitialData(filteredData);
+      return true;
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
         description: JSON.stringify(error),
       });
+      return false;
     }
   };
 
@@ -86,19 +107,64 @@ export default function DashboardPage() {
 
     if (salesQuery.isSuccess) {
       setSalesLoading(false);
-      queryClient.invalidateQueries(["sales"]);
-      queryClient.refetchQueries(["sales"]);
-      const updatedSales = queryClient.getQueryData<Sale[]>(["sales"]);
-      console.log(updatedSales);
     }
   }, [salesQuery, queryClient]);
+
+  useEffect(() => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    };
+    function fetchData() {
+      const startDate = date?.from?.toLocaleDateString("en-GB", options) ?? "";
+      const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
+
+      if (date?.to === undefined && date?.from === undefined) {
+        setBusinessSales(initialData);
+      } else if (date?.to === undefined && date?.from != undefined) {
+        const rangeData = initialData?.filter((doc: Sale) => {
+          const convert = doc.createdAt.toDate();
+          const convertedData = convert.toLocaleDateString("en-GB", options);
+          if (convertedData) {
+            return convertedData === startDate;
+          }
+        });
+        setBusinessSales(rangeData);
+      } else if (date?.to != undefined && date?.from != undefined) {
+        const rangeData = initialData?.filter((doc: Sale) => {
+          const convert = doc.createdAt.toDate();
+          const convertedData = convert.toLocaleDateString("en-GB", options);
+          if (convertedData) {
+            return convertedData >= startDate && convertedData <= endDate;
+          }
+        });
+        setBusinessSales(rangeData);
+      } else {
+        return;
+      }
+    }
+
+    fetchData();
+  }, [date, initialData]);
+
+  useEffect(() => {
+    function fetchChartData() {
+      const rangeData = initialData?.filter((doc) => {
+        const convertedYear = doc.createdAt.toDate().getFullYear().toString();
+        return convertedYear === chartYear;
+      });
+      setChartData(rangeData);
+    }
+    fetchChartData();
+  }, [chartYear, initialData]);
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 gap-4">
         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
         <div className="flex items-center space-x-2">
-          {/* <CalendarDateRangePicker /> */}
+          <CalendarDateRangePicker date={date} setDate={setDate} />
           <Button size="sm">
             <Download className="mr-2 h-4 w-4" />
             Download
@@ -113,128 +179,51 @@ export default function DashboardPage() {
             <TabsTrigger value="recent sales">Recent Sales</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
-            <Overview />
+            <Overview sales={chartData} salesLoading={salesLoading} />
           </TabsContent>
           <TabsContent value="analytics" className="space-y-4">
-            <div className="grid gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Revenue
-                  </CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">$45,231.89</div>
-                  <p className="text-xs text-muted-foreground">
-                    +20.1% from last month
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Subscriptions
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">+2350</div>
-                  <p className="text-xs text-muted-foreground">
-                    +180.1% from last month
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Sales</CardTitle>
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">+12,234</div>
-                  <p className="text-xs text-muted-foreground">
-                    +19% from last month
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Active Now
-                  </CardTitle>
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">+573</div>
-                  <p className="text-xs text-muted-foreground">
-                    +201 since last hour
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <Status
+              sales={businessSales}
+              salesLoading={salesLoading}
+              isMobile={true}
+              date={date}
+            />
           </TabsContent>
           <TabsContent value="recent sales" className="space-y-4 pt-4">
-            <RecentSales />
+            <RecentSales sales={initialData} />
           </TabsContent>
         </Tabs>
       </div>
-      <div className="hidden sm:grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Subscriptions</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
-            <p className="text-xs text-muted-foreground">
-              +180.1% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sales</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+12,234</div>
-            <p className="text-xs text-muted-foreground">
-              +19% from last month
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+573</div>
-            <p className="text-xs text-muted-foreground">
-              +201 since last hour
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-      <div className="hidden sm:grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <Status
+        sales={businessSales}
+        salesLoading={salesLoading}
+        isMobile={false}
+        date={date}
+      />
+      <div className="hidden sm:grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle>Overview</CardTitle>
+            <Select
+              defaultValue={chartYear?.toString()}
+              onValueChange={setChartYear}
+            >
+              <SelectTrigger className="w-[180px]">
+                <p>{chartYear}</p>
+              </SelectTrigger>
+              <SelectContent>
+                {years.map((year, index) => (
+                  <SelectItem key={index} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+              </SelectContent>
+            </Select>
           </CardHeader>
           <CardContent className="pl-2">
-            <Overview />
+            <Overview sales={chartData} salesLoading={salesLoading} />
           </CardContent>
         </Card>
         <Card className="lg:col-span-3">
@@ -243,7 +232,7 @@ export default function DashboardPage() {
             <CardDescription>You made 265 sales this month.</CardDescription>
           </CardHeader>
           <CardContent>
-            <RecentSales />
+            <RecentSales sales={initialData} />
           </CardContent>
         </Card>
       </div>

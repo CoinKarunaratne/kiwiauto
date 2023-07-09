@@ -10,66 +10,100 @@ import {
   YAxis,
   ResponsiveContainer,
 } from "recharts";
+import { Sale } from "../dashboard/page";
 
-const data = [
-  {
-    name: "Jan",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Feb",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Mar",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Apr",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "May",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jun",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Jul",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Aug",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Sep",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Oct",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Nov",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-  {
-    name: "Dec",
-    total: Math.floor(Math.random() * 5000) + 1000,
-  },
-];
+type overviewProps = {
+  sales: Sale[] | undefined;
+  salesLoading: boolean;
+};
 
-export function Overview() {
+export function Overview({ sales, salesLoading }: overviewProps) {
   const isMobile = window.innerWidth <= 768;
-  const [chartHeight, setChartHeight] = useState(500); // Initial height, can be adjusted as needed
+  const [chartHeight, setChartHeight] = useState(500);
+  const [chartData, setChartData] = useState<{ name: string; total: number }[]>(
+    []
+  );
+
+  useEffect(() => {
+    const monthlySales = sales?.reduce(
+      (result: { name: string; total: number }[], sale) => {
+        const saleDate = sale.createdAt.toDate();
+        const monthName = new Intl.DateTimeFormat("en-us", {
+          month: "short",
+        }).format(saleDate);
+        const salePrice = Number(sale.price);
+
+        const existingMonth = result.find((item) => item.name === monthName);
+        if (existingMonth) {
+          existingMonth.total += salePrice;
+        } else {
+          result.push({ name: monthName, total: salePrice });
+        }
+
+        return result;
+      },
+      [
+        {
+          name: "Jan",
+          total: 0,
+        },
+        {
+          name: "Feb",
+          total: 0,
+        },
+        {
+          name: "Mar",
+          total: 0,
+        },
+        {
+          name: "Apr",
+          total: 0,
+        },
+        {
+          name: "May",
+          total: 0,
+        },
+        {
+          name: "Jun",
+          total: 0,
+        },
+        {
+          name: "Jul",
+          total: 0,
+        },
+        {
+          name: "Aug",
+          total: 0,
+        },
+        {
+          name: "Sep",
+          total: 0,
+        },
+        {
+          name: "Oct",
+          total: 0,
+        },
+        {
+          name: "Nov",
+          total: 0,
+        },
+        {
+          name: "Dec",
+          total: 0,
+        },
+      ]
+    );
+    if (monthlySales) {
+      setChartData(monthlySales);
+    }
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sales, salesLoading]);
 
   useEffect(() => {
     function handleResize() {
       const windowHeight = window.innerHeight;
-      const newChartHeight = windowHeight * 0.6; // Adjust the percentage as desired
+      const newChartHeight = windowHeight * 0.6;
 
       setChartHeight(newChartHeight);
     }
@@ -85,7 +119,7 @@ export function Overview() {
   return (
     <ResponsiveContainer width="100%" height={chartHeight}>
       {isMobile ? (
-        <LineChart data={data}>
+        <LineChart data={chartData}>
           <XAxis
             dataKey="name"
             stroke="#888888"
@@ -103,7 +137,7 @@ export function Overview() {
           <Line dataKey="total" stroke="#adfa1d" dot={false} />
         </LineChart>
       ) : (
-        <BarChart data={data}>
+        <BarChart data={chartData}>
           <XAxis
             dataKey="name"
             stroke="#888888"

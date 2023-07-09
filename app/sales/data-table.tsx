@@ -128,36 +128,6 @@ export function DataTable<TData, TValue>({
     fetchData();
   }, [businessID, isShowAll, initialData, date]);
 
-  const dateRangeData = () => {
-    const options: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    };
-    if (date?.to === undefined && date?.from != undefined) {
-      const startDate = date?.from?.toLocaleDateString("en-GB", options);
-      const rangeData = data.filter(
-        (doc: ModifiedSales) => doc.createdAt === startDate
-      );
-      setData(rangeData);
-    } else {
-      if (date != undefined) {
-        const startDate =
-          date?.from?.toLocaleDateString("en-GB", options) ?? "";
-        const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
-        const rangeData = data.filter((doc: ModifiedSales) => {
-          const { createdAt } = doc;
-          if (createdAt) {
-            return createdAt >= startDate && createdAt <= endDate;
-          }
-        });
-        setData(rangeData);
-      } else {
-        return;
-      }
-    }
-  };
-
   const table = useReactTable({
     data,
     columns,
@@ -176,16 +146,6 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-4">
       <div className="flex flex-col items-end sm:flex-row sm:items-center py-4 gap-4">
-        {/* <Input
-          placeholder="Filter customers...."
-          value={
-            (table.getColumn("customer")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("customer")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        /> */}
         <div className="sm:mr-auto flex flex-col md:flex-row gap-2">
           <Button
             variant="outline"
@@ -200,11 +160,7 @@ export function DataTable<TData, TValue>({
             options={statuses}
           />
         </div>
-        <CalendarDateRangePicker
-          dateRangeData={dateRangeData}
-          date={date}
-          setDate={setDate}
-        />
+        <CalendarDateRangePicker date={date} setDate={setDate} />
       </div>
       <div className="rounded-md border">
         <Table>

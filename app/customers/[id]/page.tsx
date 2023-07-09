@@ -100,7 +100,9 @@ export default function DemoPage(url: URL) {
   });
   const [sales, setSales] = useState<ModifiedSales[]>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
-  const [buttonLoading, setButtonLoading] = useState<boolean>(false);
+  const [buttonEditLoading, setEditButtonLoading] = useState<boolean>(false);
+  const [buttonDeleteLoading, setDeleteButtonLoading] =
+    useState<boolean>(false);
 
   const dialogRef = useRef<{ [key: string]: HTMLElement | null }>({});
   const editRef = useRef<HTMLButtonElement | null>(null);
@@ -342,7 +344,7 @@ export default function DemoPage(url: URL) {
                 <AlertDialogAction
                   onClick={async () => {
                     try {
-                      await setButtonLoading(true);
+                      await setEditButtonLoading(true);
                       const docRef = doc(db, "Customers", customer?.id);
                       await updateDoc(docRef, updateCustomer);
                       toast({
@@ -359,7 +361,7 @@ export default function DemoPage(url: URL) {
                     }
                   }}
                 >
-                  {buttonLoading && (
+                  {buttonEditLoading && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}{" "}
                   Save
@@ -375,13 +377,13 @@ export default function DemoPage(url: URL) {
             Edit
           </Button>
           <Button
-            isLoading={buttonLoading}
+            isLoading={buttonDeleteLoading}
             onClick={async () => {
               try {
-                await setButtonLoading(true);
+                await setDeleteButtonLoading(true);
                 const deleteCustomerDoc = doc(db, "Customers", customer?.id);
                 await deleteDoc(deleteCustomerDoc);
-                await setButtonLoading(false);
+                await setDeleteButtonLoading(false);
                 toast({
                   title: "Success!",
                   description: "Successfully deleted customer.",
@@ -452,17 +454,17 @@ export default function DemoPage(url: URL) {
                 Edit
               </Button>
               <Button
-                isLoading={buttonLoading}
+                isLoading={buttonDeleteLoading}
                 onClick={async () => {
                   try {
-                    await setButtonLoading(true);
+                    await setDeleteButtonLoading(true);
                     const deleteCustomerDoc = doc(
                       db,
                       "Customers",
                       customer?.id
                     );
                     await deleteDoc(deleteCustomerDoc);
-                    await setButtonLoading(false);
+                    await setDeleteButtonLoading(false);
                     toast({
                       title: "Success!",
                       description: "Successfully deleted customer.",

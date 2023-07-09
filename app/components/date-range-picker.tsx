@@ -13,13 +13,9 @@ import { toast } from "@/app/components/ui/use-toast";
 
 export function CalendarDateRangePicker({
   className,
-  dateRangeData,
-
   date,
   setDate,
 }: React.HTMLAttributes<HTMLDivElement> & {
-  dateRangeData: () => void;
-
   date: DateRange | undefined;
   setDate: React.Dispatch<React.SetStateAction<DateRange | undefined>>;
 }) {
@@ -61,6 +57,7 @@ export function CalendarDateRangePicker({
             selected={date}
             onSelect={setDate}
             numberOfMonths={2}
+            disabled={(date) => date > new Date()}
           />
         </PopoverContent>
       </Popover>
