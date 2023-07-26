@@ -38,20 +38,24 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
+  SelectValue,
 } from "@/app/components/ui/select";
+import { isSameDay, isWithinInterval } from "date-fns";
 
 export type Sale = SaleFormValues & {
   id: string;
   businessID: string;
   customerID: string;
-  createdAt: Timestamp;
+  createdAt: Timestamp | Date;
   status: "paid" | "pending";
+  profit: string;
 };
 
 export default function DashboardPage() {
   const [salesLoading, setSalesLoading] = useState<boolean>(false);
   const [years, setYears] = useState<number[]>([]);
   const [chartYear, setChartYear] = useState<string>();
+  const [chartMode, setChartMode] = useState<string>("count");
   const [initialData, setInitialData] = useState<Sale[] | undefined>([]);
   const [businessSales, setBusinessSales] = useState<Sale[] | undefined>([]);
   const [chartData, setChartData] = useState<Sale[] | undefined>([]);
@@ -65,20 +69,24 @@ export default function DashboardPage() {
 
   const getSalesList = async () => {
     try {
-      const data = await getDocs(query(salesRef, orderBy("createdAt")));
+      const data = await getDocs(query(salesRef, orderBy("createdAt", "desc")));
       const filteredData = data.docs.map((doc) => ({
         ...doc.data(),
         id: doc.id,
       })) as Sale[];
       const yearsSet = new Set();
-      await filteredData.forEach((item) => {
-        const year = item.createdAt.toDate().getFullYear();
+      const filteredSalesData = filteredData.map((sale) => ({
+        ...sale,
+        createdAt: (sale.createdAt as Timestamp).toDate(),
+      }));
+      await filteredSalesData.forEach((item) => {
+        const year = item.createdAt.getFullYear();
         yearsSet.add(year);
       });
       const year = Array.from(yearsSet) as number[];
       await setYears(year);
       await setChartYear(year[year.length - 1]?.toString());
-      await setInitialData(filteredData);
+      await setInitialData(filteredSalesData);
       return true;
     } catch (error) {
       toast({
@@ -111,32 +119,22 @@ export default function DashboardPage() {
   }, [salesQuery, queryClient]);
 
   useEffect(() => {
-    const options: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    };
     function fetchData() {
-      const startDate = date?.from?.toLocaleDateString("en-GB", options) ?? "";
-      const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
-
       if (date?.to === undefined && date?.from === undefined) {
         setBusinessSales(initialData);
       } else if (date?.to === undefined && date?.from != undefined) {
-        const rangeData = initialData?.filter((doc: Sale) => {
-          const convert = doc.createdAt.toDate();
-          const convertedData = convert.toLocaleDateString("en-GB", options);
-          if (convertedData) {
-            return convertedData === startDate;
-          }
-        });
+        const rangeData = initialData?.filter((doc: Sale) =>
+          isSameDay(doc.createdAt as Date, date?.from as Date)
+        );
         setBusinessSales(rangeData);
       } else if (date?.to != undefined && date?.from != undefined) {
         const rangeData = initialData?.filter((doc: Sale) => {
-          const convert = doc.createdAt.toDate();
-          const convertedData = convert.toLocaleDateString("en-GB", options);
-          if (convertedData) {
-            return convertedData >= startDate && convertedData <= endDate;
+          const { createdAt } = doc;
+          if (createdAt) {
+            return isWithinInterval(createdAt as Date, {
+              start: date?.from as Date,
+              end: date?.to as Date,
+            });
           }
         });
         setBusinessSales(rangeData);
@@ -151,21 +149,23 @@ export default function DashboardPage() {
   useEffect(() => {
     function fetchChartData() {
       const rangeData = initialData?.filter((doc) => {
-        const convertedYear = doc.createdAt.toDate().getFullYear().toString();
+        const convertedYear = doc.createdAt.getFullYear().toString();
         return convertedYear === chartYear;
       });
       setChartData(rangeData);
     }
     fetchChartData();
-  }, [chartYear, initialData]);
+  }, [chartYear, initialData, chartMode]);
+
+  const documentDownloader = () => {};
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 gap-4">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight my-5">Dashboard</h2>
         <div className="flex items-center space-x-2">
           <CalendarDateRangePicker date={date} setDate={setDate} />
-          <Button size="sm">
+          <Button size="sm" onClick={documentDownloader}>
             <Download className="mr-2 h-4 w-4" />
             Download
           </Button>
@@ -173,13 +173,17 @@ export default function DashboardPage() {
       </div>
       <div className="sm:hidden">
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
+          <TabsList className="my-10">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="recent sales">Recent Sales</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
-            <Overview sales={chartData} salesLoading={salesLoading} />
+            <Overview
+              sales={chartData}
+              salesLoading={salesLoading}
+              chart={chartMode}
+            />
           </TabsContent>
           <TabsContent value="analytics" className="space-y-4">
             <Status
@@ -202,28 +206,46 @@ export default function DashboardPage() {
       />
       <div className="hidden sm:grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-col gap-2 pb-2">
             <CardTitle>Overview</CardTitle>
-            <Select
-              defaultValue={chartYear?.toString()}
-              onValueChange={setChartYear}
-            >
-              <SelectTrigger className="w-[180px]">
-                <p>{chartYear}</p>
-              </SelectTrigger>
-              <SelectContent>
-                {years.map((year, index) => (
-                  <SelectItem key={index} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2025">2025</SelectItem>
-              </SelectContent>
-            </Select>
+            <CardDescription className="flex flex-row justify-end gap-2">
+              {" "}
+              <Select
+                defaultValue={chartYear?.toString()}
+                onValueChange={setChartYear}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <p>{chartYear}</p>
+                </SelectTrigger>
+                <SelectContent>
+                  {years.map((year, index) => (
+                    <SelectItem key={index} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="2024">2024</SelectItem>
+                  <SelectItem value="2025">2025</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select defaultValue={chartMode} onValueChange={setChartMode}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="count">Sales Count</SelectItem>
+                  <SelectItem value="price">Revenue</SelectItem>
+                  <SelectItem value="profit">Profits</SelectItem>
+                  <SelectItem value="cost">Costs</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardDescription>
           </CardHeader>
-          <CardContent className="pl-2">
-            <Overview sales={chartData} salesLoading={salesLoading} />
+          <CardContent className="pl-2 pt-5">
+            <Overview
+              sales={chartData}
+              salesLoading={salesLoading}
+              chart={chartMode}
+            />
           </CardContent>
         </Card>
         <Card className="lg:col-span-3">
