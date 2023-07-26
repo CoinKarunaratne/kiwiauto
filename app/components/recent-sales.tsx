@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { Sale } from "../dashboard/page";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import Link from "next/link";
@@ -7,9 +11,10 @@ type RecentSalesProps = {
 };
 
 export function RecentSales({ sales }: RecentSalesProps) {
-  const recentSales = sales?.slice(-15);
+  const recentSales = sales?.slice(-20);
+
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 overflow-scroll max-h-[60vh]`}>
       {recentSales?.map((sale, index) => (
         <div key={index} className="flex items-center">
           <Link href={`/customers/${sale.customerID}`}>

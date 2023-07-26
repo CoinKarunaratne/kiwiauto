@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Customers",
-  description: "Kiwiautocare customers",
+  title: "Services",
+  description: "Kiwiautocare services",
 };
 
 export default function RootLayout({

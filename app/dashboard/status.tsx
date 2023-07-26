@@ -2,24 +2,15 @@ import { FC, useEffect, useState } from "react";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { Calculator, Car, DollarSign, Users } from "lucide-react";
+import { Calculator, DollarSign, BarChart, PieChart } from "lucide-react";
 
 import { Sale } from "./page";
 import { useSelector } from "react-redux";
 import { CustomerFormValues } from "../add/customer/customerForm";
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "@/config/firebase";
-import { useToast } from "@/app/components/ui/use-toast";
+import { Timestamp } from "firebase/firestore";
 import { ServiceFormValues } from "../add/service/serviceForm";
 import { DateRange } from "react-day-picker";
 
@@ -44,16 +35,18 @@ export type TotalSales = {
   totalRevenueDiff: number | undefined;
   currentRevenue: number | undefined;
   currentRevenueDiff: number | undefined;
-  totalCustomers: number | undefined;
-  customersDiff: number | undefined;
-  totalCurrentCustomers: number | undefined;
-  currentCustomersDiff: number | undefined;
   salesCount: number | undefined;
   salesCountDiff: number | undefined;
   currentSalesCount: number | undefined;
   currentSalesCountDiff: number | undefined;
-  servicesCount: number | undefined;
-  currentServicesCount: number | undefined;
+  totalCost: number | undefined;
+  totalCostDiff: number | undefined;
+  currentCost: number | undefined;
+  currentCostDiff: number | undefined;
+  totalProfit: number | undefined;
+  totalProfitDiff: number | undefined;
+  currentProfit: number | undefined;
+  currentProfitDiff: number | undefined;
 };
 
 const Status: FC<statusProps> = ({ sales, salesLoading, isMobile, date }) => {
@@ -66,83 +59,42 @@ const Status: FC<statusProps> = ({ sales, salesLoading, isMobile, date }) => {
 
   const currentDate = new Date();
   const currentMonth = currentDate.getMonth() + 1;
-  const { toast } = useToast();
 
   const [totalSales, setTotalSales] = useState<TotalSales>({
     totalRevenue: 0,
     totalRevenueDiff: 0,
     currentRevenue: 0,
     currentRevenueDiff: 0,
-    totalCustomers: 0,
-    customersDiff: 0,
-    totalCurrentCustomers: 0,
-    currentCustomersDiff: 0,
     salesCount: 0,
     salesCountDiff: 0,
     currentSalesCount: 0,
     currentSalesCountDiff: 0,
-    servicesCount: 0,
-    currentServicesCount: 0,
+    totalCost: 0,
+    totalCostDiff: 0,
+    currentCost: 0,
+    currentCostDiff: 0,
+    totalProfit: 0,
+    totalProfitDiff: 0,
+    currentProfit: 0,
+    currentProfitDiff: 0,
   });
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [services, setServices] = useState<Service[]>([]);
-
-  useEffect(() => {
-    const customersRef = collection(db, "Customers");
-    const getCustomersList = async () => {
-      try {
-        const data = await getDocs(query(customersRef, orderBy("createdAt")));
-        const filteredData = data.docs.map((doc) => ({
-          ...doc.data(),
-        })) as Customer[];
-        await setCustomers(filteredData);
-        return;
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong.",
-          description: JSON.stringify(error),
-        });
-      }
-    };
-    getCustomersList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const servicesRef = collection(db, "Services");
-    const getServicesList = async () => {
-      try {
-        const data = await getDocs(query(servicesRef, orderBy("createdAt")));
-        const filteredData = data.docs.map((doc) => ({
-          ...doc.data(),
-        })) as Service[];
-        await setServices(filteredData);
-        return;
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Uh oh! Something went wrong.",
-          description: JSON.stringify(error),
-        });
-      }
-    };
-    getServicesList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [isLastMonth, setLastMonth] = useState<boolean>(false);
 
   useEffect(() => {
     const currentBusinessSales = sales?.filter(
       (doc) => doc.businessID === businessID
     );
     const lastMonthBusinessSales = sales?.filter((doc) => {
-      const docDate = doc.createdAt.toDate();
+      const docDate = doc.createdAt;
       const docMonth = docDate.getMonth() + 1;
       return docMonth < currentMonth;
     });
+    if (lastMonthBusinessSales?.length === 0) {
+      setLastMonth(true);
+    }
     const lastMonthCurrentBusinessSales = currentBusinessSales?.filter(
       (doc) => {
-        const docDate = doc.createdAt.toDate();
+        const docDate = doc.createdAt;
         const docMonth = docDate.getMonth() + 1;
         return docMonth < currentMonth;
       }
@@ -193,55 +145,80 @@ const Status: FC<statusProps> = ({ sales, salesLoading, isMobile, date }) => {
           100
         : 0;
 
-    const totalCustomers = customers?.length;
-    const currentCustomers = customers?.filter(
-      (doc) => doc.businessID === businessID
+    const totalCost = sales?.reduce(
+      (total, obj) => total + parseFloat(obj.cost),
+      0
     );
-    const totalCurrentCustomers = currentCustomers.length;
-    const lastMonthCustomers = customers?.filter((doc) => {
-      const docDate = doc.createdAt.toDate();
-      const docMonth = docDate.getMonth() + 1;
-      return docMonth < currentMonth;
-    });
-    const lastMonthCurrentCustomers = currentCustomers?.filter((doc) => {
-      const docDate = doc.createdAt.toDate();
-      const docMonth = docDate.getMonth() + 1;
-      return docMonth < currentMonth;
-    });
-
-    const customersDiff =
-      ((totalCustomers - lastMonthCustomers?.length) /
-        lastMonthCustomers?.length) *
-      100;
-
-    const currentCustomersDiff =
-      ((totalCurrentCustomers - lastMonthCurrentCustomers?.length) /
-        lastMonthCurrentCustomers?.length) *
-      100;
-
-    const servicesCount = services.length;
-    const currentServices = services.filter(
-      (doc) => doc.businessID === businessID
+    const lastMonthCost = lastMonthBusinessSales?.reduce(
+      (total, obj) => total + parseFloat(obj.cost),
+      0
     );
-    const currentServicesCount = currentServices?.length;
+    const totalCostDiff =
+      totalCost !== undefined && lastMonthCost !== undefined
+        ? ((totalCost - lastMonthCost) / lastMonthCost) * 100
+        : 0;
+
+    const currentCost = currentBusinessSales?.reduce(
+      (total, obj) => total + parseFloat(obj.cost),
+      0
+    );
+    const lastMonthCurrentCost = lastMonthCurrentBusinessSales?.reduce(
+      (total, obj) => total + parseFloat(obj.cost),
+      0
+    );
+
+    const currentCostDiff =
+      currentCost !== undefined && lastMonthCurrentCost !== undefined
+        ? ((currentCost - lastMonthCurrentCost) / lastMonthCurrentCost) * 100
+        : 0;
+
+    const totalProfit = sales?.reduce(
+      (total, obj) => total + parseFloat(obj.profit),
+      0
+    );
+    const lastMonthProfit = lastMonthBusinessSales?.reduce(
+      (total, obj) => total + parseFloat(obj.profit),
+      0
+    );
+    const totalProfitDiff =
+      totalProfit !== undefined && lastMonthProfit !== undefined
+        ? ((totalProfit - lastMonthProfit) / lastMonthProfit) * 100
+        : 0;
+
+    const currentProfit = currentBusinessSales?.reduce(
+      (total, obj) => total + parseFloat(obj.profit),
+      0
+    );
+    const lastMonthCurrentProfit = lastMonthCurrentBusinessSales?.reduce(
+      (total, obj) => total + parseFloat(obj.profit),
+      0
+    );
+
+    const currentProfitDiff =
+      currentProfit !== undefined && lastMonthCurrentProfit !== undefined
+        ? ((currentProfit - lastMonthCurrentProfit) / lastMonthCurrentProfit) *
+          100
+        : 0;
 
     setTotalSales({
       totalRevenue,
       totalRevenueDiff,
       currentRevenue,
       currentRevenueDiff,
-      totalCustomers,
-      customersDiff,
-      totalCurrentCustomers,
-      currentCustomersDiff,
       salesCount,
       salesCountDiff,
       currentSalesCount,
       currentSalesCountDiff,
-      servicesCount,
-      currentServicesCount,
+      totalCost,
+      totalCostDiff,
+      currentCost,
+      currentCostDiff,
+      totalProfit,
+      totalProfitDiff,
+      currentProfit,
+      currentProfitDiff,
     });
-  }, [sales, businessID, currentMonth, customers, salesLoading, services]);
+  }, [sales, businessID, currentMonth, salesLoading]);
 
   return (
     <div
@@ -260,7 +237,8 @@ const Status: FC<statusProps> = ({ sales, salesLoading, isMobile, date }) => {
           </div>
           {date?.from === undefined && (
             <p className="text-xs text-muted-foreground">
-              +{totalSales.totalRevenueDiff?.toFixed(2)}% from last month
+              +{isLastMonth ? 0 : totalSales.totalRevenueDiff?.toFixed(2)}% from
+              last month
             </p>
           )}
         </CardContent>
@@ -275,7 +253,8 @@ const Status: FC<statusProps> = ({ sales, salesLoading, isMobile, date }) => {
           </div>
           {date?.from === undefined && (
             <p className="text-xs text-muted-foreground">
-              +{totalSales.currentRevenueDiff?.toFixed(2)}% from last month
+              +{isLastMonth ? 0 : totalSales.currentRevenueDiff?.toFixed(2)}%
+              from last month
             </p>
           )}
         </CardContent>
@@ -291,7 +270,8 @@ const Status: FC<statusProps> = ({ sales, salesLoading, isMobile, date }) => {
           <div className="text-2xl font-bold">+{totalSales.salesCount}</div>
           {date?.from === undefined && (
             <p className="text-xs text-muted-foreground">
-              +{totalSales.salesCountDiff?.toFixed(2)}% from last month
+              +{isLastMonth ? 0 : totalSales.salesCountDiff?.toFixed(2)}% from
+              last month
             </p>
           )}
         </CardContent>
@@ -306,60 +286,68 @@ const Status: FC<statusProps> = ({ sales, salesLoading, isMobile, date }) => {
           </div>
           {date?.from === undefined && (
             <p className="text-xs text-muted-foreground">
-              +{totalSales.currentSalesCountDiff?.toFixed(2)}% from last month
+              +{isLastMonth ? 0 : totalSales.currentSalesCountDiff?.toFixed(2)}%
+              from last month
             </p>
           )}
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Total Cost</CardTitle>
+          <BarChart className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            {" "}
-            +{totalSales.totalCustomers}
-          </div>
+          <div className="text-2xl font-bold"> +{totalSales.totalCost}</div>
           {date?.from === undefined && (
             <p className="text-xs text-muted-foreground">
-              +{totalSales.customersDiff?.toFixed(2)}% from last month
+              +{isLastMonth ? 0 : totalSales.totalCostDiff?.toFixed(2)}% from
+              last month
             </p>
           )}
         </CardContent>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            {businessName} Customers
+            {businessName} Cost
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            +{totalSales.totalCurrentCustomers}
-          </div>
+          <div className="text-2xl font-bold">+{totalSales.currentCost}</div>
           {date?.from === undefined && (
             <p className="text-xs text-muted-foreground">
-              +{totalSales.currentCustomersDiff?.toFixed(2)}% from last month
+              +{isLastMonth ? 0 : totalSales.currentCostDiff?.toFixed(2)}% from
+              last month
             </p>
           )}
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Services</CardTitle>
-          <Car className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Total Profit</CardTitle>
+          <PieChart className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">+{totalSales.servicesCount}</div>
+          <div className="text-2xl font-bold"> +{totalSales.totalProfit}</div>
+          {date?.from === undefined && (
+            <p className="text-xs text-muted-foreground">
+              +{isLastMonth ? 0 : totalSales.totalProfitDiff?.toFixed(2)}% from
+              last month
+            </p>
+          )}
         </CardContent>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            {businessName} Services
+            {businessName} Profit
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">
-            +{totalSales.currentServicesCount}
-          </div>
+          <div className="text-2xl font-bold">+{totalSales.currentProfit}</div>
+          {date?.from === undefined && (
+            <p className="text-xs text-muted-foreground">
+              +{isLastMonth ? 0 : totalSales.currentProfitDiff?.toFixed(2)}%
+              from last month
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -14,7 +14,7 @@ const inter = Inter({
 
 export const metadata = {
   title: "Add New",
-  description: "Kiwiautocare dashboard",
+  description: "Kiwiautocare",
 };
 
 const sidebarNavItems = [

@@ -43,7 +43,7 @@ export type ModifiedSales = {
   businessID: string;
   customerID: string;
   status: "paid" | "pending" | undefined;
-  createdAt: Timestamp | string | undefined;
+  createdAt: Timestamp | undefined | Date;
   customer: string | undefined;
   service: string | undefined;
   price: string | undefined;
@@ -58,11 +58,6 @@ export default function DemoPage() {
 
   async function getData() {
     const salesRef = collection(db, "Sales");
-    const options: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    };
 
     try {
       const data = await getDocs(query(salesRef, orderBy("createdAt", "desc")));
@@ -73,9 +68,7 @@ export default function DemoPage() {
       }));
       const salesData = filteredData.map((sales) => ({
         ...sales,
-        createdAt: (sales.createdAt as Timestamp)
-          .toDate()
-          .toLocaleDateString("en-GB", options),
+        createdAt: (sales.createdAt as Timestamp).toDate(),
       }));
 
       return setData(salesData);
@@ -107,6 +100,19 @@ export default function DemoPage() {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Date" />
       ),
+      cell: ({ row }) => {
+        const options: Intl.DateTimeFormatOptions = {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        };
+        const sale = row.original;
+        const createdAt =
+          sale?.createdAt instanceof Date &&
+          sale?.createdAt?.toLocaleDateString("en-GB", options);
+
+        return <div className="font-medium">{createdAt}</div>;
+      },
     },
     {
       accessorKey: "customer",
@@ -123,6 +129,36 @@ export default function DemoPage() {
       ),
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("price"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+
+        return <div className="font-medium">{formatted}</div>;
+      },
+    },
+    {
+      accessorKey: "cost",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Cost" />
+      ),
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("cost"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+
+        return <div className="font-medium">{formatted}</div>;
+      },
+    },
+    {
+      accessorKey: "profit",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Profit" />
+      ),
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("profit"));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",

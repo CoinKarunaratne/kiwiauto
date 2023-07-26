@@ -28,6 +28,8 @@ import { DataTableFacetedFilter } from "./facet-filter";
 import { ModifiedSales } from "@/app/sales/page";
 import { DataTablePagination } from "./table-pagination";
 import { CustomerDateRangePicker } from "./date-range-picker";
+import { isSameDay, isWithinInterval } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -61,29 +63,24 @@ export function DataTable<TData, TValue>({
   ];
 
   useEffect(() => {
-    const options: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    };
     function fetchData() {
       if (date?.to === undefined && date?.from != undefined) {
-        const startDate = date?.from?.toLocaleDateString("en-GB", options);
-
         const rangeData = initialData.filter(
-          (doc: ModifiedSales) => doc.createdAt === startDate
+          (doc: ModifiedSales) =>
+            doc.createdAt instanceof Timestamp &&
+            isSameDay(doc?.createdAt?.toDate() as Date, date?.from as Date)
         );
         setData(rangeData);
       } else {
         if (date?.to != undefined && date?.from != undefined) {
-          const startDate =
-            date?.from?.toLocaleDateString("en-GB", options) ?? "";
-          const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
-
           const rangeData = initialData.filter((doc: ModifiedSales) => {
             const { createdAt } = doc;
-            if (createdAt) {
-              return createdAt >= startDate && createdAt <= endDate;
+
+            if (createdAt instanceof Timestamp) {
+              return isWithinInterval(createdAt.toDate() as Date, {
+                start: date?.from as Date,
+                end: date?.to as Date,
+              });
             }
           });
           setData(rangeData);

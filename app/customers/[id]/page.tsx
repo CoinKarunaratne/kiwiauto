@@ -65,8 +65,6 @@ export type ModifiedCustomers = {
   createdAt: Timestamp | string | undefined;
   email: string | undefined;
   name: string;
-  type: string | undefined;
-  vehicle: string | undefined;
 };
 
 type URL = {
@@ -84,8 +82,6 @@ export default function DemoPage(url: URL) {
     createdAt: "",
     email: "",
     name: "",
-    type: "",
-    vehicle: "",
   });
   const [updateCustomer, setUpdateCustomer] = useState<ModifiedCustomers>({
     id: "",
@@ -95,8 +91,6 @@ export default function DemoPage(url: URL) {
     createdAt: "",
     email: "",
     name: "",
-    type: "",
-    vehicle: "",
   });
   const [sales, setSales] = useState<ModifiedSales[]>([]);
   const [isLoading, setLoading] = useState<boolean>(false);
@@ -202,6 +196,36 @@ export default function DemoPage(url: URL) {
       ),
       cell: ({ row }) => {
         const amount = parseFloat(row.getValue("price"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+
+        return <div className="font-medium">{formatted}</div>;
+      },
+    },
+    {
+      accessorKey: "cost",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Cost" />
+      ),
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("cost"));
+        const formatted = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        }).format(amount);
+
+        return <div className="font-medium">{formatted}</div>;
+      },
+    },
+    {
+      accessorKey: "profit",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Profit" />
+      ),
+      cell: ({ row }) => {
+        const amount = parseFloat(row.getValue("profit"));
         const formatted = new Intl.NumberFormat("en-US", {
           style: "currency",
           currency: "USD",
@@ -352,6 +376,7 @@ export default function DemoPage(url: URL) {
                         description: "Successfully updated customer record.",
                       });
                       await fetchData();
+                      await setEditButtonLoading(false);
                     } catch (err) {
                       toast({
                         variant: "destructive",
@@ -408,11 +433,6 @@ export default function DemoPage(url: URL) {
         <div>{customer?.email}</div>
         <Separator orientation="vertical" />
         <div>{customer?.contact}</div>
-        <Separator orientation="vertical" />
-        <div>
-          {customer?.vehicle}{" "}
-          <span className="font-bold">{customer?.type}</span>
-        </div>
       </div>
 
       <div className="container hidden md:grid mx-auto py-10">
@@ -437,11 +457,6 @@ export default function DemoPage(url: URL) {
                   <div>{customer?.email}</div>
                   <Separator />
                   <div>{customer?.contact}</div>
-                  <Separator />
-                  <div>
-                    {customer?.vehicle}{" "}
-                    <span className="font-bold">{customer?.type}</span>
-                  </div>
                 </CardContent>
               </Card>
             </div>

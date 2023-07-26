@@ -18,19 +18,18 @@ import {
 
 import { useEffect, useState } from "react";
 import { ModifiedSales } from "../sales/page";
-import { DataTableColumnHeader } from "./column-header";
+
 import Link from "next/link";
 
 export type ModifiedCustomers = {
   id: string;
+  customId: string;
   businessID: string;
   address: string;
   contact: string;
   createdAt: Timestamp | string | undefined;
   email: string | undefined;
   name: string | undefined;
-  type: string | undefined;
-  vehicle: string | undefined;
 };
 
 export default function DemoPage() {
@@ -85,8 +84,30 @@ export default function DemoPage() {
 
   const columns: ColumnDef<ModifiedCustomers>[] = [
     {
+      accessorKey: "customId",
+      header: "ID",
+      cell: ({ row }) => {
+        const customer = row.original;
+
+        return (
+          <Link href={`/customers/${customer.id}`} className="hover:underline">
+            {customer.customId}
+          </Link>
+        );
+      },
+    },
+    {
       accessorKey: "name",
       header: "Name",
+      cell: ({ row }) => {
+        const customer = row.original;
+
+        return (
+          <Link href={`/customers/${customer.id}`} className="hover:underline">
+            {customer.name}
+          </Link>
+        );
+      },
     },
     {
       accessorKey: "contact",
@@ -96,18 +117,7 @@ export default function DemoPage() {
       accessorKey: "address",
       header: "Address",
     },
-    {
-      accessorKey: "type",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Vehicle type" />
-      ),
-      cell: ({ row }) => {
-        const customer = row.original;
-        if (!customer.type) {
-          return <h1 className="ml-10">-</h1>;
-        } else return <h1 className="ml-5">{customer.type}</h1>;
-      },
-    },
+
     {
       accessorKey: "sales",
       header: "Sales",

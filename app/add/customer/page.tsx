@@ -1,11 +1,11 @@
 import { FC } from "react";
 
-import { SaleForm } from "./customerForm";
+import { CustomerForm } from "./customerForm";
 
 const page: FC = ({}) => {
   return (
     <div className="space-y-3">
-      <SaleForm />
+      <CustomerForm />
     </div>
   );
 };

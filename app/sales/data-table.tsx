@@ -30,6 +30,7 @@ import { DateRange } from "react-day-picker";
 import { DataTableFacetedFilter } from "./facet-filter";
 import { ModifiedSales } from "./page";
 import { DataTablePagination } from "./table-pagination";
+import { isSameDay, isWithinInterval } from "date-fns";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -71,38 +72,34 @@ export function DataTable<TData, TValue>({
   ];
 
   useEffect(() => {
-    const options: Intl.DateTimeFormatOptions = {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    };
     function fetchData() {
       const salesData = initialData.filter(
         (doc: ModifiedSales) => doc?.businessID === businessID
       );
       if (date?.to === undefined && date?.from != undefined) {
-        const startDate = date?.from?.toLocaleDateString("en-GB", options);
         if (isShowAll) {
-          const rangeData = initialData.filter(
-            (doc: ModifiedSales) => doc.createdAt === startDate
+          const rangeData = initialData.filter((doc: ModifiedSales) =>
+            isSameDay(doc.createdAt as Date, date?.from as Date)
           );
+
           setData(rangeData);
         } else {
-          const rangeData = salesData.filter(
-            (doc: ModifiedSales) => doc.createdAt === startDate
+          const rangeData = salesData.filter((doc: ModifiedSales) =>
+            isSameDay(doc.createdAt as Date, date?.from as Date)
           );
+
           setData(rangeData);
         }
       } else {
         if (date?.to != undefined && date?.from != undefined) {
-          const startDate =
-            date?.from?.toLocaleDateString("en-GB", options) ?? "";
-          const endDate = date?.to?.toLocaleDateString("en-GB", options) ?? "";
           if (isShowAll) {
             const rangeData = initialData.filter((doc: ModifiedSales) => {
               const { createdAt } = doc;
               if (createdAt) {
-                return createdAt >= startDate && createdAt <= endDate;
+                return isWithinInterval(createdAt as Date, {
+                  start: date?.from as Date,
+                  end: date?.to as Date,
+                });
               }
             });
             setData(rangeData);
@@ -110,7 +107,10 @@ export function DataTable<TData, TValue>({
             const rangeData = salesData.filter((doc: ModifiedSales) => {
               const { createdAt } = doc;
               if (createdAt) {
-                return createdAt >= startDate && createdAt <= endDate;
+                return isWithinInterval(createdAt as Date, {
+                  start: date?.from as Date,
+                  end: date?.to as Date,
+                });
               }
             });
             setData(rangeData);

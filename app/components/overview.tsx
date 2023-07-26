@@ -15,9 +15,10 @@ import { Sale } from "../dashboard/page";
 type overviewProps = {
   sales: Sale[] | undefined;
   salesLoading: boolean;
+  chart: string;
 };
 
-export function Overview({ sales, salesLoading }: overviewProps) {
+export function Overview({ sales, salesLoading, chart }: overviewProps) {
   const isMobile = window.innerWidth <= 768;
   const [chartHeight, setChartHeight] = useState(500);
   const [chartData, setChartData] = useState<{ name: string; total: number }[]>(
@@ -27,11 +28,15 @@ export function Overview({ sales, salesLoading }: overviewProps) {
   useEffect(() => {
     const monthlySales = sales?.reduce(
       (result: { name: string; total: number }[], sale) => {
-        const saleDate = sale.createdAt.toDate();
+        const saleDate = sale.createdAt;
         const monthName = new Intl.DateTimeFormat("en-us", {
           month: "short",
         }).format(saleDate);
-        const salePrice = Number(sale.price);
+        const objectFinder = (obj: any, value: any) => {
+          return obj[value];
+        };
+        const salePrice =
+          chart === "count" ? 1 : Number(objectFinder(sale, chart));
 
         const existingMonth = result.find((item) => item.name === monthName);
         if (existingMonth) {
@@ -132,7 +137,9 @@ export function Overview({ sales, salesLoading }: overviewProps) {
             fontSize={12}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value) => `$${value}`}
+            tickFormatter={(value) =>
+              chart === "count" ? `${parseInt(value)}` : `$${parseInt(value)}`
+            }
           />
           <Line dataKey="total" stroke="#adfa1d" dot={false} />
         </LineChart>
@@ -150,7 +157,9 @@ export function Overview({ sales, salesLoading }: overviewProps) {
             fontSize={12}
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value) => `$${value}`}
+            tickFormatter={(value) =>
+              chart === "count" ? `${parseInt(value)}` : `$${parseInt(value)}`
+            }
           />
           <Bar dataKey="total" fill="#adfa1d" radius={[4, 4, 0, 0]} />
         </BarChart>

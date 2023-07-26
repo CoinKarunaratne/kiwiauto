@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { cn } from "@/lib/utils";
 import { useSelector } from "react-redux";
+import { usePathname } from "next/navigation";
 
 export function MainNav({
   className,
@@ -12,47 +13,31 @@ export function MainNav({
   const businessID = useSelector(
     (state: { businessName: string; businessID: string }) => state.businessID
   );
+  const pathname = usePathname();
+  const navItems = [
+    { href: "/dashboard", title: "Overview" },
+    { href: "/customers", title: "Customers" },
+    { href: "/services", title: "Services" },
+    { href: "/sales", title: "Sales" },
+    { href: "/add", title: "Add New" },
+    { href: `/settings/${businessID}`, title: "Settings" },
+  ];
   return (
     <nav
       className={cn("flex items-center space-x-4 lg:space-x-6", className)}
       {...props}
     >
-      <Link
-        href="/dashboard"
-        className="text-sm font-medium transition-colors hover:text-primary"
-      >
-        Overview
-      </Link>
-      <Link
-        href="/customers"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        Customers
-      </Link>
-      <Link
-        href="/services"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        Services
-      </Link>
-      <Link
-        href="/sales"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        Sales
-      </Link>
-      <Link
-        href="/add"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        Add New
-      </Link>
-      <Link
-        href={`/settings/${businessID}`}
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-      >
-        Settings
-      </Link>
+      {navItems.map((item, index) => (
+        <Link
+          key={index}
+          href={item.href}
+          className={`text-sm font-medium ${
+            pathname != item.href && "text-muted-foreground"
+          } transition-colors hover:text-primary`}
+        >
+          {item.title}
+        </Link>
+      ))}
     </nav>
   );
 }

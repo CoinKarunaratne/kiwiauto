@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 import { Separator } from "../components/ui/separator";
+import CarMakeSwitcher from "./carMakeSwitcher";
 
 const saleFormSchema = z.object({
   createdAt: z.date({
@@ -48,8 +49,17 @@ const saleFormSchema = z.object({
   service: z.string().min(1, {
     message: "Please enter a service.",
   }),
+  brand: z.string().min(1, {
+    message: "Please enter a car brand.",
+  }),
+  model: z.string().min(1, {
+    message: "Please enter a car model.",
+  }),
   price: z.string().min(1, {
     message: "Please enter a valid price.",
+  }),
+  cost: z.string().min(1, {
+    message: "Please enter a valid amount.",
   }),
   status: z.string().min(1, {
     message: "Please select the status.",
@@ -71,7 +81,7 @@ export function SaleForm() {
   const [loading, isLoading] = useState<boolean>(false);
   const [isCustomerSelected, setCustomerSelected] = useState<boolean>(false);
   const [isServiceSelected, setServiceSelected] = useState<boolean>(false);
-
+  const [isCarMakeSelected, setCarMakeSelected] = useState<boolean>(false);
   const [serviceID, setServiceID] = useState<string>("");
   const [customerID, setCustomerID] = useState<string>("");
 
@@ -83,10 +93,14 @@ export function SaleForm() {
     form.setValue("customer", "");
     form.setValue("service", "");
     form.setValue("price", "");
+    form.setValue("cost", "");
+    form.setValue("brand", "");
+    form.setValue("model", "");
   };
 
   useEffect(() => {
     formReset();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -101,13 +115,20 @@ export function SaleForm() {
     setServiceID(id);
   };
 
+  const setCarMake = (make: string) => {
+    form.setValue("brand", make);
+  };
+
   function onSubmit(data: SaleFormValues) {
     isLoading(true);
     setServiceSelected(false);
     setCustomerSelected(false);
+    setCarMakeSelected(false);
+    const profit = Number(data.price) - Number(data.cost);
     const updatedData = {
       ...data,
       createdAt: Timestamp.fromDate(data.createdAt),
+      profit,
       businessID,
       customerID,
     };
@@ -237,10 +258,57 @@ export function SaleForm() {
           />
           <FormField
             control={form.control}
+            name="brand"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Car Brand</FormLabel>
+                <FormControl>
+                  <div>
+                    <CarMakeSwitcher
+                      {...field}
+                      setCarMake={setCarMake}
+                      isSelected={isCarMakeSelected}
+                      setSelected={setCarMakeSelected}
+                      className="w-[400px]"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="model"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Car Model</FormLabel>
+                <FormControl>
+                  <Input {...field} className="w-[400px]" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="price"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Price</FormLabel>
+                <FormControl>
+                  <Input {...field} className="w-[400px]" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="cost"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Cost</FormLabel>
                 <FormControl>
                   <Input {...field} className="w-[400px]" />
                 </FormControl>

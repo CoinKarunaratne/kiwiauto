@@ -5,13 +5,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select";
 import { toast } from "@/app/components/ui/use-toast";
 import {
   Form,
@@ -27,6 +20,9 @@ import { useSelector } from "react-redux";
 import { Separator } from "@/app/components/ui/separator";
 
 const customerFormSchema = z.object({
+  customId: z.string().min(1, {
+    message: "Please enter customer ID.",
+  }),
   name: z.string().min(1, {
     message: "Please enter customer name.",
   }),
@@ -35,8 +31,6 @@ const customerFormSchema = z.object({
   }),
   email: z.string().optional(),
   address: z.string().optional(),
-  type: z.string().optional(),
-  vehicle: z.string().optional(),
 });
 
 export type CustomerFormValues = z.infer<typeof customerFormSchema>;
@@ -45,7 +39,7 @@ type RootState = {
   businessName: string;
 };
 
-export function SaleForm() {
+export function CustomerForm() {
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerFormSchema),
     mode: "onChange",
@@ -56,12 +50,11 @@ export function SaleForm() {
   const businessName = useSelector((state: RootState) => state.businessName);
 
   const formReset = () => {
+    form.setValue("customId", "");
     form.setValue("name", ""); // Set initial value for "name" field
     form.setValue("contact", ""); // Set initial value for "contact" field
     form.setValue("email", ""); // Set initial value for "email" field
     form.setValue("address", ""); // Set initial value for "address" field
-    form.setValue("vehicle", ""); // Set initial value for "vehicle" field
-    form.setValue("type", ""); // Set initial value for "type" field
   };
 
   useEffect(() => {
@@ -114,6 +107,19 @@ export function SaleForm() {
         >
           <FormField
             control={form.control}
+            name="customId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Customer ID</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
             name="name"
             render={({ field }) => (
               <FormItem>
@@ -157,47 +163,6 @@ export function SaleForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Address</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a vehicle Type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="SUV">SUV</SelectItem>
-                    <SelectItem value="Sedan">Sedan</SelectItem>
-                    <SelectItem value="Pickup Truck">Pickup Truck</SelectItem>
-                    <SelectItem value="Hatchback">Hatchback</SelectItem>
-                    <SelectItem value="Station Wagon">Station Wagon</SelectItem>
-                    <SelectItem value="Mini Van">Mini Van</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="vehicle"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Vehicle</FormLabel>
                 <FormControl>
                   <Input {...field} />
                 </FormControl>
