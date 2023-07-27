@@ -37,7 +37,7 @@ const LandingPageForm: FC<LandingPageFormProps> = ({}) => {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: { err },
+        description: JSON.stringify(err),
       });
     }
   };
