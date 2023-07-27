@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/app/components/ui/select";
 import { isSameDay, isWithinInterval } from "date-fns";
+import * as XLSX from "xlsx";
 
 export type Sale = SaleFormValues & {
   id: string;
@@ -157,7 +158,37 @@ export default function DashboardPage() {
     fetchChartData();
   }, [chartYear, initialData, chartMode]);
 
-  const documentDownloader = () => {};
+  const documentDownloader = () => {
+    if (businessSales !== undefined) {
+      if (businessSales.length === 0) {
+        toast({
+          title: "Unable to proceed!",
+          description: "There are no sales record to show for this period",
+        });
+        return;
+      }
+      const options: Intl.DateTimeFormatOptions = {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      };
+      const sales = businessSales.map((item) => {
+        const createdAtDate =
+          item.createdAt instanceof Date
+            ? item.createdAt
+            : new Date(item.createdAt);
+        return {
+          ...item,
+          createdAt: createdAtDate.toLocaleDateString("en-US", options),
+        };
+      });
+      var wb = XLSX.utils.book_new(),
+        ws = XLSX.utils.json_to_sheet(sales);
+
+      XLSX.utils.book_append_sheet(wb, ws, "Sales-form");
+      XLSX.writeFile(wb, "SalesReport.xlsx");
+    }
+  };
 
   return (
     <div className="flex-1 space-y-6 p-8 pt-6">
@@ -165,6 +196,7 @@ export default function DashboardPage() {
         <h2 className="text-3xl font-bold tracking-tight my-5">Dashboard</h2>
         <div className="flex items-center space-x-2">
           <CalendarDateRangePicker date={date} setDate={setDate} />
+
           <Button size="sm" onClick={documentDownloader}>
             <Download className="mr-2 h-4 w-4" />
             Download

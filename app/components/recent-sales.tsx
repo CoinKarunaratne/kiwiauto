@@ -14,7 +14,7 @@ export function RecentSales({ sales }: RecentSalesProps) {
   const recentSales = sales?.slice(-20);
 
   return (
-    <div className={`space-y-8 overflow-scroll max-h-[60vh]`}>
+    <div className={`space-y-8 overflow-scroll max-h-[50vh]`}>
       {recentSales?.map((sale, index) => (
         <div key={index} className="flex items-center">
           <Link href={`/customers/${sale.customerID}`}>

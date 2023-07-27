@@ -108,7 +108,7 @@ export function Overview({ sales, salesLoading, chart }: overviewProps) {
   useEffect(() => {
     function handleResize() {
       const windowHeight = window.innerHeight;
-      const newChartHeight = windowHeight * 0.6;
+      const newChartHeight = windowHeight * 0.5;
 
       setChartHeight(newChartHeight);
     }
