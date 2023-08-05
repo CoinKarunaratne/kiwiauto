@@ -150,15 +150,18 @@ export function DataTable<TData, TValue>({
           <Button
             variant="outline"
             className="h-auto"
+            disabled={businessID === "lS6DOv6PF0HJPdkwEA4o"}
             onClick={() => setShowAll((state) => !state)}
           >
             {isShowAll ? `Show ${businessName} sales` : "Show all sales"}
           </Button>
-          <DataTableFacetedFilter
-            column={table.getColumn("status")}
-            title="Status"
-            options={statuses}
-          />
+          {businessID !== "lS6DOv6PF0HJPdkwEA4o" && (
+            <DataTableFacetedFilter
+              column={table.getColumn("status")}
+              title="Status"
+              options={statuses}
+            />
+          )}
         </div>
         <CalendarDateRangePicker date={date} setDate={setDate} />
       </div>

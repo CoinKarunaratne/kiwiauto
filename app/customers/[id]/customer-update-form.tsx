@@ -15,6 +15,18 @@ const UpdateCustomer = ({
   return (
     <div className="space-y-3 mt-5">
       <div className="space-y-1">
+        <Label>Customer ID</Label>
+        <Input
+          onChange={(e) => {
+            setUpdateCustomer((doc) => ({
+              ...doc,
+              customId: e.target.value,
+            }));
+          }}
+          value={updateCustomer.customId}
+        />
+      </div>
+      <div className="space-y-1">
         <Label>Name</Label>
         <Input
           onChange={(e) => {

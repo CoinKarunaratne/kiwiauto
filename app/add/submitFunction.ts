@@ -7,7 +7,6 @@ import {
   collection,
   Timestamp,
 } from "firebase/firestore";
-import { ModifiedSales } from "../sales/page";
 
 const salesRef = collection(db, "Sales");
 
@@ -21,6 +20,18 @@ type submitSales = {
   status: string;
 };
 
+type submitCarSales = {
+  createdAt: Timestamp;
+  brand: string;
+  model: string;
+  price: string;
+  cost: string;
+  rego: string;
+  description: string;
+  profit: number;
+  businessID: string;
+};
+
 export const submitSale = async (
   data: submitSales,
   id: string,
@@ -31,4 +42,10 @@ export const submitSale = async (
   });
   const serviceDoc = doc(db, "Services", id);
   await updateDoc(serviceDoc, { customers: arrayUnion(customer) });
+};
+
+export const carSaleSubmit = async (data: submitCarSales) => {
+  await addDoc(salesRef, {
+    ...data,
+  });
 };

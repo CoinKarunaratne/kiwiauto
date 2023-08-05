@@ -59,6 +59,7 @@ import UpdateCustomer from "./customer-update-form";
 
 export type ModifiedCustomers = {
   id: string;
+  customId: string;
   businessID: string;
   address: string | undefined;
   contact: string;
@@ -76,6 +77,7 @@ type URL = {
 export default function DemoPage(url: URL) {
   const [customer, setCustomer] = useState<ModifiedCustomers>({
     id: "",
+    customId: "",
     businessID: "",
     address: "",
     contact: "",
@@ -85,6 +87,7 @@ export default function DemoPage(url: URL) {
   });
   const [updateCustomer, setUpdateCustomer] = useState<ModifiedCustomers>({
     id: "",
+    customId: "",
     businessID: "",
     address: "",
     contact: "",
@@ -336,16 +339,24 @@ export default function DemoPage(url: URL) {
 
   return (
     <div className="space-y-6 p-10 pb-16">
-      <div className="space-y-0.5 flex justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            {customer?.name}
-          </h2>
-          <p className="text-muted-foreground">
-            Here are the customer details of {customer?.name}
-          </p>
+      <div className="space-y-0.5 flex flex-col gap-5">
+        <div className="flex justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">
+              {customer?.name}
+            </h2>
+            <p className="text-muted-foreground">
+              Here are the customer details of {customer?.name}
+            </p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Customer ID :</p>
+            <h2 className="text-2xl font-bold tracking-tight">
+              {customer?.customId}
+            </h2>
+          </div>
         </div>
-        <div className="hidden md:flex gap-4">
+        <div className="hidden md:flex gap-4 justify-end">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button ref={editRef} className="hidden" variant="outline">
@@ -428,11 +439,19 @@ export default function DemoPage(url: URL) {
       </div>
       <Separator className="sm:my-6" />
       <div className="container hidden md:flex mx-auto h-5 text-base justify-center space-x-4">
-        <div>{customer?.address}</div>
-        <Separator orientation="vertical" />
-        <div>{customer?.email}</div>
-        <Separator orientation="vertical" />
-        <div>{customer?.contact}</div>
+        {customer.address !== "" && (
+          <>
+            <div>{customer?.address}</div>
+            <Separator orientation="vertical" />
+          </>
+        )}
+        {customer.email !== "" && (
+          <>
+            <div>{customer?.email}</div>
+            <Separator orientation="vertical" />
+          </>
+        )}
+        {customer.contact !== "" && <div>{customer?.contact}</div>}
       </div>
 
       <div className="container hidden md:grid mx-auto py-10">
@@ -452,10 +471,18 @@ export default function DemoPage(url: URL) {
                   <CardTitle className="text-sm font-medium"></CardTitle>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-2 text-sm">
-                  <div>{customer?.address}</div>
-                  <Separator />
-                  <div>{customer?.email}</div>
-                  <Separator />
+                  {customer.address !== "" && (
+                    <>
+                      <div>{customer?.address}</div>
+                      <Separator />
+                    </>
+                  )}
+                  {customer.email !== "" && (
+                    <>
+                      <div>{customer?.email}</div>
+                      <Separator />
+                    </>
+                  )}
                   <div>{customer?.contact}</div>
                 </CardContent>
               </Card>
