@@ -91,6 +91,8 @@ const Status: FC<statusProps> = ({ sales, salesLoading, isMobile, date }) => {
     });
     if (lastMonthBusinessSales?.length === 0) {
       setLastMonth(true);
+    } else {
+      setLastMonth(false);
     }
     const lastMonthCurrentBusinessSales = currentBusinessSales?.filter(
       (doc) => {

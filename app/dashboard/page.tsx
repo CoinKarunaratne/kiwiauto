@@ -57,7 +57,7 @@ export default function DashboardPage() {
   const [years, setYears] = useState<number[]>([]);
   const [chartYear, setChartYear] = useState<string>();
   const [chartMode, setChartMode] = useState<string>("count");
-  const [initialData, setInitialData] = useState<Sale[] | undefined>([]);
+  const [initialData, setInitialData] = useState<any | undefined>([]);
   const [businessSales, setBusinessSales] = useState<Sale[] | undefined>([]);
   const [chartData, setChartData] = useState<Sale[] | undefined>([]);
   const [date, setDate] = useState<DateRange | undefined>({
@@ -149,7 +149,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     function fetchChartData() {
-      const rangeData = initialData?.filter((doc) => {
+      const rangeData = initialData?.filter((doc: any) => {
         const convertedYear = doc.createdAt.getFullYear().toString();
         return convertedYear === chartYear;
       });

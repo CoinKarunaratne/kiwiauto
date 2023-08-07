@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { carSaleFormValues } from "../add/saleForm";
 import { Sale } from "../dashboard/page";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import Link from "next/link";
+import { useSelector } from "react-redux";
 
 type RecentSalesProps = {
-  sales: Sale[] | undefined;
+  sales: (Sale[] & carSaleFormValues[]) | undefined;
+};
+
+type RootState = {
+  businessID: string;
+  businessName: string;
 };
 
 export function RecentSales({ sales }: RecentSalesProps) {
   const recentSales = sales?.slice(-20);
+  const businessID = useSelector((state: RootState) => state.businessID);
 
   return (
     <div className={`space-y-8 overflow-scroll max-h-[50vh]`}>
@@ -23,12 +29,22 @@ export function RecentSales({ sales }: RecentSalesProps) {
             </Avatar>
           </Link>
           <div className="ml-4 space-y-1">
-            <Link href={`/customers/${sale.customerID}`}>
+            {sale.businessID === "lS6DOv6PF0HJPdkwEA4o" ? (
               <p className="text-sm font-medium leading-none">
-                {sale.customer}
+                Car sale customer
               </p>
-            </Link>
-            <p className="text-sm text-muted-foreground">{sale.service}</p>
+            ) : (
+              <Link href={`/customers/${sale.customerID}`}>
+                <p className="text-sm font-medium leading-none">
+                  {sale.customer}
+                </p>
+              </Link>
+            )}
+            {sale.businessID === "lS6DOv6PF0HJPdkwEA4o" ? (
+              <p className="text-sm text-muted-foreground">Car Sale</p>
+            ) : (
+              <p className="text-sm text-muted-foreground">{sale.service}</p>
+            )}
           </div>
 
           <div className="ml-auto font-medium">+${sale.price}</div>

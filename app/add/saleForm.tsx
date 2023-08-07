@@ -90,7 +90,7 @@ const carSaleFormSchema = z.object({
 });
 
 export type SaleFormValues = z.infer<typeof saleFormSchema>;
-type carSaleFormValues = z.infer<typeof carSaleFormSchema>;
+export type carSaleFormValues = z.infer<typeof carSaleFormSchema>;
 
 type RootState = {
   businessID: string;
@@ -139,10 +139,16 @@ export function SaleForm() {
   };
 
   useEffect(() => {
-    formReset();
-    carSaleformReset();
+    form.reset();
+    carSaleForm.reset();
+    if (businessID === "lS6DOv6PF0HJPdkwEA4o") {
+      carSaleformReset();
+    } else {
+      formReset();
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [businessID]);
 
   const setCustomer = (data: string, id: string) => {
     form.setValue("customer", data);
