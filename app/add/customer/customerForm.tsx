@@ -26,9 +26,7 @@ const customerFormSchema = z.object({
   name: z.string().min(1, {
     message: "Please enter customer name.",
   }),
-  contact: z.string().min(1, {
-    message: "Please enter customer's contact",
-  }),
+  contact: z.string().optional(),
   email: z.string().optional(),
   address: z.string().optional(),
 });
