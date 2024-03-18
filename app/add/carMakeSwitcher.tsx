@@ -58,6 +58,8 @@ const CarMakeSwitcher = ({
 
     try {
       const response = await axios.request(options);
+      (await !response.data.includes("Renault")) &&
+        response.data.push("Renault");
       await setCarMakes(response.data);
     } catch (error) {
       toast({

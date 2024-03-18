@@ -53,6 +53,9 @@ const saleFormSchema = z.object({
   brand: z.string().min(1, {
     message: "Please enter a car brand.",
   }),
+  rego: z.string().min(1, {
+    message: "Please enter rego.",
+  }),
   model: z.string().min(1, {
     message: "Please enter a car model.",
   }),
@@ -126,6 +129,7 @@ export function SaleForm() {
     form.setValue("cost", "");
     form.setValue("brand", "");
     form.setValue("model", "");
+    form.setValue("rego", "");
   };
 
   const carSaleformReset = () => {
@@ -182,6 +186,7 @@ export function SaleForm() {
       businessID,
       customerID,
     };
+
     submitSale(updatedData, serviceID, customerID)
       .then(() => {
         isLoading(false);
@@ -497,6 +502,19 @@ export function SaleForm() {
                         className="w-[400px]"
                       />
                     </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="rego"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Rego</FormLabel>
+                  <FormControl>
+                    <Input {...field} className="w-[400px]" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

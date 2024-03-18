@@ -18,6 +18,7 @@ type submitSales = {
   service: string;
   price: string;
   status: string;
+  rego: string;
 };
 
 type submitCarSales = {

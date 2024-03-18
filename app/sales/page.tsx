@@ -48,6 +48,7 @@ export type ModifiedSales = {
   customer: string | undefined;
   service: string | undefined;
   price: string | undefined;
+  rego: string | undefined;
 };
 
 type RootState = {
@@ -137,6 +138,21 @@ export default function DemoPage() {
             {payment.businessID === "lS6DOv6PF0HJPdkwEA4o"
               ? "car sale customer"
               : payment.customer}
+          </div>
+        );
+      },
+    },
+    {
+      accessorKey: "rego",
+      header: "Rego",
+      cell: ({ row }) => {
+        const payment = row.original;
+
+        return (
+          <div className="font-medium">
+            {payment.businessID === "lS6DOv6PF0HJPdkwEA4o"
+              ? "car sale customer"
+              : payment.rego}
           </div>
         );
       },
